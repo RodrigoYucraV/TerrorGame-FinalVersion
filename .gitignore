@@ -1,0 +1,71 @@
+# ==========================================
+# 1. Carpetas temporales y de caché de Unity
+# ==========================================
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Aa]rchive/
+
+# ==========================================
+# 2. Archivos de solución de IDE (Visual Studio / Rider)
+# ==========================================
+.vs/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# ==========================================
+# 3. Modelos 3D y multimedia pesada (Innecesarios para leer código)
+# ==========================================
+# Archivos 3D y animaciones
+*.fbx
+*.obj
+*.blend
+*.blend1
+*.dae
+*.max
+*.3ds
+
+# Texturas e imágenes pesadas
+*.png
+*.jpg
+*.jpeg
+*.tga
+*.psd
+*.tif
+*.tiff
+*.exr
+*.hdr
+
+# Archivos de Audio
+*.wav
+*.mp3
+*.ogg
+*.aif
+
+# Paquetes y binarios
+*.unitypackage
+*.assetbundle
+*.zip
+*.rar
+
+# ==========================================
+# 4. Archivos del sistema operativo
+# ==========================================
+.DS_Store
+Thumbs.db

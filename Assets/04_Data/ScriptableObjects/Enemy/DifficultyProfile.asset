@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb825d4aff1305048bf0f18a3981f63e, type: 3}
+  m_Name: DifficultyProfile
+  m_EditorClassIdentifier: 
+  enemySettings: {fileID: 11400000, guid: 5c913804cfef3024caba3f6b5ecd057d, type: 2}
+  lightDamagePerSecond: 15
+  retreatDuration: 2
+  waveConfig:
+  - name: Bateria
+    itemData: {fileID: 11400000, guid: a402b9dcc43c7a64b9f44b682573cc1a, type: 2}
+    category: 2
+    amountToSpawn: 5

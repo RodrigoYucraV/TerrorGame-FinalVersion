@@ -1,0 +1,62 @@
+# Blender 4.4.3 MTL File: 'casaNormal.blend'
+# www.blender.org
+
+newmtl Casa
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd Imagen de WhatsApp 2025-04-25 a las 00.32.15_e65ef91d.jpg
+map_d Imagen de WhatsApp 2025-04-25 a las 00.32.15_e65ef91d.jpg
+
+newmtl Casa.001
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd Imagen de WhatsApp 2025-04-25 a las 00.32.15_e65ef91d.jpg
+map_d Imagen de WhatsApp 2025-04-25 a las 00.32.15_e65ef91d.jpg
+
+newmtl Casa.002
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+Pr 0.500000
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd Imagen de WhatsApp 2025-04-25 a las 00.32.15_e65ef91d.jpg
+map_d Imagen de WhatsApp 2025-04-25 a las 00.32.15_e65ef91d.jpg
+
+newmtl Tejado
+Kd 0.254672 0.092189 0.021662
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+Pr 0.322727
+Pm 0.000000
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000

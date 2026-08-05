@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e72dcf741984eb58074dc099f837, type: 3}
+  m_Name: Scene1
+  m_EditorClassIdentifier: 
+  title: Cementerio
+  description: 'Jugador despierta en el cementerio luego de chayar de mas, tiene
+    que buscar sus llaves y pilas ya que algunos focos estan fregados. '
+  requiredItem: {fileID: 11400000, guid: f447eb5afd2ebba4c95aa568e1b146a5, type: 2}
+  completesLevel: 0
