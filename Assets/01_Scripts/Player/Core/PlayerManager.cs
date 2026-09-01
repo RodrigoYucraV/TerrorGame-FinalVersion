@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerMovement))]
 [RequireComponent(typeof(JumpSystem))]
 [RequireComponent(typeof(HealthSystem))]
+[RequireComponent(typeof(PlayerInput))]
+[RequireComponent(typeof(CameraController))]
 public class PlayerManager : MonoBehaviour, IPlayerPositionProvider
 {
     public static PlayerManager Instance { get; private set; }
@@ -23,7 +25,7 @@ public class PlayerManager : MonoBehaviour, IPlayerPositionProvider
 
     private void Awake()
     {
-        // Lógica Singleton (Asegura que solo haya una instancia)
+        // Lï¿½gica Singleton (Asegura que solo haya una instancia)
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -31,16 +33,16 @@ public class PlayerManager : MonoBehaviour, IPlayerPositionProvider
         }
         Instance = this;
 
-        // Validación
+        // Validaciï¿½n
         if (playerCameraTransform == null)
-            Debug.LogError("¡Falta asignar la Player Camera en el PlayerManager!");
+            Debug.LogError("ï¿½Falta asignar la Player Camera en el PlayerManager!");
 
         input = GetComponent<PlayerInput>();
         movement = GetComponent<PlayerMovement>();
         jump = GetComponent<JumpSystem>();
         cameraController = GetComponent<CameraController>();
 
-        // Notificar que el player está listo
+        // Notificar que el player estï¿½ listo
         if (PlayerEventSystem.Instance != null)
         {
             PlayerEventSystem.Instance.NotifyPlayerReady(this);

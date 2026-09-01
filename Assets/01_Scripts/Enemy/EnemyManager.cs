@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 using System.Linq;
 using Random = UnityEngine.Random; // Evitamos confusión con System.Random
 
@@ -71,7 +70,9 @@ public class EnemyManager : MonoBehaviour, IRespawnHandler, ISafeZoneProvider
 
             Vector3 candidatePos = volume.GetRandomPointInVolume();
 
-            float distance = Vector3.Distance(candidatePos, cameraProvider.CameraPosition);
+            float distance = cameraProvider != null
+                ? Vector3.Distance(candidatePos, cameraProvider.CameraPosition)
+                : minSpawnDistance + 1f;
 
             // Condición 1: Debe estar lejos (Mínima distancia)
             bool isFarEnough = distance > minSpawnDistance;

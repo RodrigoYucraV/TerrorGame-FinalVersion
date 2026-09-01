@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class EnemyStateMachine : MonoBehaviour
@@ -9,6 +8,8 @@ public class EnemyStateMachine : MonoBehaviour
     public void SetState(IEnemyState newState)
     {
         currentState?.Exit();
+        if (currentState is IDisposable disposableState) disposableState.Dispose();
+
         currentState = newState;
         currentState?.Enter();
     }

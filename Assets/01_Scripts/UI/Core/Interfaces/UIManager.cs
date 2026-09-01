@@ -21,9 +21,16 @@ public class UIManager : MonoBehaviour
 
     private void InitializeSystems()
     {
-        inventoryUI.Initialize(inventorySystem);
-        sanityUI.Initialize(sanitySystem);
-        objectiveSystem.AddObjective("find_key", "Encuentra la llave del sótano");
-        sanitySystem.OnSanityDepleted += gameStateUI.OnSanityDepleted;
+        if (inventoryUI != null && inventorySystem != null) inventoryUI.Initialize(inventorySystem);
+        else Debug.LogWarning("UIManager: faltan referencias de inventario.");
+
+        if (sanityUI != null && sanitySystem != null) sanityUI.Initialize(sanitySystem);
+        else Debug.LogWarning("UIManager: faltan referencias de cordura.");
+
+        if (objectiveSystem != null) objectiveSystem.AddObjective("find_key", "Encuentra la llave del sï¿½tano");
+        else Debug.LogWarning("UIManager: falta ObjectiveSystem.");
+
+        if (sanitySystem != null && gameStateUI != null) sanitySystem.OnSanityDepleted += gameStateUI.OnSanityDepleted;
+        else Debug.LogWarning("UIManager: no se pudo conectar cordura con GameStateUI.");
     }
 }

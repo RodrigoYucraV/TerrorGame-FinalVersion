@@ -4,8 +4,8 @@ using UnityEngine;
 public class EnemyVisuals : MonoBehaviour, IVisibilityController
 {
     [Header("Referencias Visuales")]
-    [SerializeField] private Renderer enemyRenderer; // Asigna el MeshRenderer de la cápsula
-    //[SerializeField] private ParticleSystem burnParticles; // Tu sistema de partículas
+    [SerializeField] private Renderer enemyRenderer; // Asigna el MeshRenderer de la cï¿½psula
+    //[SerializeField] private ParticleSystem burnParticles; // Tu sistema de partï¿½culas
 
     [Header("Audio")]
     //[SerializeField] private AudioSource audioSource;
@@ -22,7 +22,7 @@ public class EnemyVisuals : MonoBehaviour, IVisibilityController
             materialInstance = enemyRenderer.material;
         }
 
-        // Configuración inicial de partículas
+        // Configuraciï¿½n inicial de partï¿½culas
         //if (burnParticles != null) burnParticles.Stop();
     }
 
@@ -31,12 +31,11 @@ public class EnemyVisuals : MonoBehaviour, IVisibilityController
         IsVisible = visible;
         // Opcional: Activar/Desactivar el renderer de golpe si no quieres fade
         if (enemyRenderer != null) enemyRenderer.enabled = visible;
-        gameObject.SetActive(visible);
     }
 
     public void FadeOut(float duration)
     {
-        // Activar partículas y sonido al empezar a quemarse
+        // Activar partï¿½culas y sonido al empezar a quemarse
         //if (burnParticles != null) burnParticles.Play();
         //if (audioSource != null && burnSound != null) audioSource.PlayOneShot(burnSound);
         StartCoroutine(DoFade(1f, 0f, duration));
@@ -71,7 +70,6 @@ public class EnemyVisuals : MonoBehaviour, IVisibilityController
         {
             IsVisible = false;
             if (enemyRenderer != null) enemyRenderer.enabled = false;
-            gameObject.SetActive(false);
         }
         else
         {

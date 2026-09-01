@@ -5,7 +5,9 @@ using UnityEngine;
 
 public class SanitySystem : MonoBehaviour, ISanityProvider
 {
-    public float CurrentSanityPct => CurrentSanity / maxSanity; [Header("Configuración")]
+    public float CurrentSanityPct => maxSanity > 0f ? CurrentSanity / maxSanity : 0f;
+
+    [Header("Configuraciï¿½n")]
     [SerializeField] private float maxSanity = 100f;
     [SerializeField] private float passiveDrainRate = 0.5f;
     [SerializeField] private float distanceEffectMultiplier = 0.1f;
@@ -15,8 +17,13 @@ public class SanitySystem : MonoBehaviour, ISanityProvider
     public event Action OnSanityDepleted;
 
     private List<ISanityAffector> _activeAffectors = new();
+    private bool _isDepleted;
 
-    private void Start() => CurrentSanity = maxSanity;
+    private void Awake()
+    {
+        CurrentSanity = maxSanity;
+        _isDepleted = CurrentSanity <= 0f;
+    }
 
     private void Update()
     {
@@ -31,7 +38,8 @@ public class SanitySystem : MonoBehaviour, ISanityProvider
     public void RestoreSanity(float amount)
     {
         CurrentSanity = Mathf.Clamp(CurrentSanity + amount, 0, maxSanity);
-        OnSanityChanged?.Invoke(CurrentSanity / maxSanity);
+        if (CurrentSanity > 0f) _isDepleted = false;
+        OnSanityChanged?.Invoke(CurrentSanityPct);
     }
 
     private void ApplyPassiveDrain()
@@ -56,10 +64,11 @@ public class SanitySystem : MonoBehaviour, ISanityProvider
     private void UpdateSanity()
     {
         CurrentSanity = Mathf.Clamp(CurrentSanity, 0, maxSanity);
-        OnSanityChanged?.Invoke(CurrentSanity / maxSanity);
+        OnSanityChanged?.Invoke(CurrentSanityPct);
 
-        if (CurrentSanity <= 0)
+        if (CurrentSanity <= 0 && !_isDepleted)
         {
+            _isDepleted = true;
             OnSanityDepleted?.Invoke();
         }
     }

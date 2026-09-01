@@ -1,7 +1,5 @@
 using System;
 using TMPro;
-using UnityEditor.UI;
-using UnityEditor.UIElements;
 using UnityEngine;
 
 public class ScoreSystem : MonoBehaviour
@@ -27,7 +25,10 @@ public class ScoreSystem : MonoBehaviour
     public void AddScore(int points) => CurrentScore += points;
     public void ResetScore() => CurrentScore = 0;
 
-    private void UpdateUI() => scoreText.text = _currentScore.ToString();
+    private void UpdateUI()
+    {
+        if (scoreText != null) scoreText.text = _currentScore.ToString();
+    }
     private void SaveScore() => PlayerPrefs.SetInt("PlayerScore", _currentScore);
     private void LoadScore() => CurrentScore = PlayerPrefs.GetInt("PlayerScore", 0);
 }

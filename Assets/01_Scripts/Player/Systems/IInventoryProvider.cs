@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public interface IInventoryProvider
 {
     event Action<int> OnSlotUpdated;
+    int SlotCount { get; }
     InventorySlot GetSlot(int slotIndex);
     void UseItem(int slotIndex);
     void AddItemToSlot(string nameItem,int slotIndex, string itemID, int quantity = 1);

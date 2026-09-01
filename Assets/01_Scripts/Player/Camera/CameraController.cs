@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.AI;
-
 public class CameraController : MonoBehaviour
 {
     [SerializeField] private float verticalLookLimit = 85f;
@@ -9,6 +7,8 @@ public class CameraController : MonoBehaviour
     private float verticalRotation;
     private void Start()
     {
+        if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
+        if (cameraTransform == null) Debug.LogError("CameraController: falta asignar cameraTransform y no existe Camera.main.");
         InitializeCursorState();
     }
 
@@ -18,10 +18,12 @@ public class CameraController : MonoBehaviour
     }
     public void RotateCamera(Vector2 lookInput)
     {
-        // Rotación horizontal (jugador)
+        if (cameraTransform == null) return;
+
+        // Rotaciï¿½n horizontal (jugador)
         transform.Rotate(Vector3.up * lookInput.x);
 
-        // Rotación vertical (cámara)
+        // Rotaciï¿½n vertical (cï¿½mara)
         verticalRotation -= lookInput.y;
         verticalRotation = Mathf.Clamp(verticalRotation, -verticalLookLimit, verticalLookLimit);
         cameraTransform.localEulerAngles = new Vector3(verticalRotation, 0, 0);

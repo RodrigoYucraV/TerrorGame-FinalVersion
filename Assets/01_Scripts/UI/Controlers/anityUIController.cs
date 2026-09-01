@@ -20,22 +20,29 @@ public class SanityUIController : MonoBehaviour, ISanityProvider
     public event Action<float> OnSanityChanged;
     public event Action OnSanityDepleted;
 
-    public float CurrentSanityPct => throw new NotImplementedException();
+    public float CurrentSanityPct => _sanityProvider != null ? _sanityProvider.CurrentSanityPct : 0f;
 
     private void OnEnable()
     {
-        GetComponent<SanitySystem>().OnSanityChanged += UpdateUI;
+        if (_sanityProvider == null)
+        {
+            SanitySystem sanitySystem = GetComponent<SanitySystem>();
+            if (sanitySystem == null) sanitySystem = FindFirstObjectByType<SanitySystem>();
+            if (sanitySystem != null) Initialize(sanitySystem);
+        }
     }
 
     private void OnDisable()
     {
-        GetComponent<SanitySystem>().OnSanityChanged -= UpdateUI;
+        Unsubscribe();
     }
 
     private void UpdateUI(float sanityPct)
     {
-        // Barra básica
-        sanityBar.fillAmount = sanityPct;
+        OnSanityChanged?.Invoke(sanityPct);
+
+        // Barra bï¿½sica
+        if (sanityBar != null) sanityBar.fillAmount = sanityPct;
 
         // Efectos de cordura baja
         if (sanityPct <= criticalThreshold)
@@ -51,30 +58,48 @@ public class SanityUIController : MonoBehaviour, ISanityProvider
 
     private void ApplyCriticalEffects(float intensity)
     {
-        sanityOverlay.color = new Color(criticalColor.r, criticalColor.g, criticalColor.b, intensity * overlayIntensity);
-        sanityOverlay.gameObject.SetActive(true);
+        if (sanityOverlay != null)
+        {
+            sanityOverlay.color = new Color(criticalColor.r, criticalColor.g, criticalColor.b, intensity * overlayIntensity);
+            sanityOverlay.gameObject.SetActive(true);
+        }
 
-        heartbeatSound.volume = intensity;
-        if (!heartbeatSound.isPlaying) heartbeatSound.Play();
+        if (heartbeatSound != null)
+        {
+            heartbeatSound.volume = intensity;
+            if (!heartbeatSound.isPlaying) heartbeatSound.Play();
+        }
     }
 
     private void ResetEffects()
     {
-        sanityOverlay.gameObject.SetActive(false);
-        heartbeatSound.Stop();
+        if (sanityOverlay != null) sanityOverlay.gameObject.SetActive(false);
+        if (heartbeatSound != null) heartbeatSound.Stop();
     }
     public void Initialize(ISanityProvider provider)
     {
+        Unsubscribe();
         _sanityProvider = provider;
+        if (_sanityProvider == null) return;
+
         _sanityProvider.OnSanityChanged += UpdateUI;
-        _sanityProvider.OnSanityDepleted += OnSanityDepleted;
+        _sanityProvider.OnSanityDepleted += HandleSanityDepleted;
+        UpdateUI(_sanityProvider.CurrentSanityPct);
     }
+
+    private void HandleSanityDepleted() => OnSanityDepleted?.Invoke();
+
+    private void Unsubscribe()
+    {
+        if (_sanityProvider == null) return;
+
+        _sanityProvider.OnSanityChanged -= UpdateUI;
+        _sanityProvider.OnSanityDepleted -= HandleSanityDepleted;
+        _sanityProvider = null;
+    }
+
     private void OnDestroy()
     {
-        if (_sanityProvider != null)
-        {
-            _sanityProvider.OnSanityChanged -= UpdateUI;
-            _sanityProvider.OnSanityDepleted -= OnSanityDepleted;
-        }
+        Unsubscribe();
     }
 }

@@ -8,16 +8,16 @@ public class InventorySystem : MonoBehaviour, IInventoryProvider
     public event Action<int> OnSlotUpdated = delegate { };
 
     // 1. DECLARAMOS EL EVENTO QUE FALTA
-    public event Action<InventoryItemData> OnItemAdded; // <--- ¡ESTA LÍNEA FALTABA!
+    public event Action<InventoryItemData> OnItemAdded; // <--- ï¿½ESTA Lï¿½NEA FALTABA!
 
-    [Header("Configuración")]
+    [Header("Configuraciï¿½n")]
     [SerializeField] private ItemDatabase itemDatabase;
     [SerializeField] private int slotCount = 4;
 
     // ESTADO
     [SerializeField] private InventorySlot[] slots;
 
-    public int SlotCount => slots.Length;
+    public int SlotCount => slots != null ? slots.Length : slotCount;
 
     private void Awake()
     {
@@ -32,7 +32,7 @@ public class InventorySystem : MonoBehaviour, IInventoryProvider
         }
 
         if (itemDatabase != null) itemDatabase.Initialize();
-        else Debug.LogError("CRÍTICO: ¡No has asignado la ItemDatabase en el InventorySystem!");
+        else Debug.LogError("CRï¿½TICO: ï¿½No has asignado la ItemDatabase en el InventorySystem!");
     }
 
     public InventorySlot GetSlot(int slotIndex) => IsValidSlot(slotIndex) ? slots[slotIndex] : null;
@@ -58,36 +58,45 @@ public class InventorySystem : MonoBehaviour, IInventoryProvider
     public void AddItemToSlot(string nameItem, int slotIndex, string itemID, int quantity = 1)
     {
         if (!IsValidSlot(slotIndex)) return;
+        if (itemDatabase == null) return;
 
         InventoryItemData data = itemDatabase.GetItem(itemID);
         if (data == null) return;
+        quantity = Mathf.Max(1, quantity);
 
         InventorySlot slot = slots[slotIndex];
 
         if (slot.IsEmpty)
         {
-            slot.SetItem(data, quantity);
+            int amountToAdd = data.isStackable ? Mathf.Min(quantity, Mathf.Max(1, data.maxStack)) : 1;
+            slot.SetItem(data, amountToAdd);
         }
         else if (slot.ItemID == itemID && data.isStackable)
         {
-            slot.AddQuantity(quantity);
+            int availableSpace = Mathf.Max(0, data.maxStack - slot.Quantity);
+            if (availableSpace <= 0) return;
+
+            slot.AddQuantity(Mathf.Min(quantity, availableSpace));
         }
         else
         {
-            Debug.LogWarning($"Sobrescribiendo slot {slotIndex} con {itemID}");
-            slot.SetItem(data, quantity);
+            Debug.LogWarning($"Slot {slotIndex} ocupado. No se sobrescribiÃ³ con {itemID}.");
+            return;
         }
 
         OnSlotUpdated?.Invoke(slotIndex);
 
         // 2. DISPARAMOS EL EVENTO AL AGREGAR
-        OnItemAdded?.Invoke(data); // <--- ¡ESTA LÍNEA FALTABA!
+        OnItemAdded?.Invoke(data); // <--- ï¿½ESTA Lï¿½NEA FALTABA!
     }
 
     public bool AddItem(string itemID, int quantity = 1)
     {
+        if (itemDatabase == null) return false;
+
         InventoryItemData data = itemDatabase.GetItem(itemID);
         if (data == null) return false;
+        quantity = Mathf.Max(1, quantity);
 
         // Intentar apilar
         if (data.isStackable)
@@ -96,23 +105,27 @@ public class InventorySystem : MonoBehaviour, IInventoryProvider
             {
                 if (!slots[i].IsEmpty && slots[i].ItemID == itemID)
                 {
-                    slots[i].AddQuantity(quantity);
+                    int availableSpace = Mathf.Max(0, data.maxStack - slots[i].Quantity);
+                    if (availableSpace <= 0) continue;
+
+                    slots[i].AddQuantity(Mathf.Min(quantity, availableSpace));
                     OnSlotUpdated?.Invoke(i);
-                    OnItemAdded?.Invoke(data); // <--- ¡ESTA LÍNEA FALTABA!
+                    OnItemAdded?.Invoke(data); // <--- ï¿½ESTA Lï¿½NEA FALTABA!
 
                     return true;
                 }
             }
         }
 
-        // Intentar hueco vacío
+        // Intentar hueco vacï¿½o
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i].IsEmpty)
             {
-                slots[i].SetItem(data, quantity);
+                int amountToAdd = data.isStackable ? Mathf.Min(quantity, Mathf.Max(1, data.maxStack)) : 1;
+                slots[i].SetItem(data, amountToAdd);
                 OnSlotUpdated?.Invoke(i);
-                OnItemAdded?.Invoke(data); // <--- ¡ESTA LÍNEA FALTABA!
+                OnItemAdded?.Invoke(data); // <--- ï¿½ESTA Lï¿½NEA FALTABA!
 
                 return true;
             }

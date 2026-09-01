@@ -6,7 +6,7 @@ public class ItemCollector : MonoBehaviour, IInteractable
 {
     [SerializeField] private InventoryUI inventoryUI;
     [SerializeField] private InventoryItemData _itemData;
-    public string ItemID => _itemData.itemID;
+    public string ItemID => _itemData != null ? _itemData.itemID : string.Empty;
     [SerializeField] private float highlightDuration = 0.5f;
 
     private IInventoryProvider _inventory;
@@ -21,18 +21,23 @@ public class ItemCollector : MonoBehaviour, IInteractable
             _inventory = player.GetComponent<IInventoryProvider>();
             if (_inventory == null)
             {
-                Debug.LogError("¡El jugador no tiene un IInventoryProvider!");
+                Debug.LogError("ï¿½El jugador no tiene un IInventoryProvider!");
             }
         }
         else
         {
-            Debug.LogError("¡No se encontró un GameObject con tag 'Player'!");
+            Debug.LogError("ï¿½No se encontrï¿½ un GameObject con tag 'Player'!");
         }
     }
 
     public void OnGrabbed(Transform holder)
     {
         if (!_canCollect) return;
+        if (_itemData == null)
+        {
+            Debug.LogError($"ItemCollector: falta InventoryItemData en {name}.");
+            return;
+        }
 
         int emptySlot = FindEmptySlot();
         if (emptySlot != -1)
@@ -44,14 +49,14 @@ public class ItemCollector : MonoBehaviour, IInteractable
     private IEnumerator CollectItemProcess(int slotIndex)
     {
 
-        inventoryUI.HighlightSlot(slotIndex, true);
+        if (inventoryUI != null) inventoryUI.HighlightSlot(slotIndex, true);
         yield return new WaitForSeconds(highlightDuration);
 
-        // Añadir ítem
+        // Aï¿½adir ï¿½tem
         if (_inventory != null)
         {
-            _inventory.AddItemToSlot(_itemData.displayName,slotIndex,ItemID, 1);
-            inventoryUI.HighlightSlot(slotIndex, false);
+            _inventory.AddItemToSlot(_itemData.displayName, slotIndex, ItemID, 1);
+            if (inventoryUI != null) inventoryUI.HighlightSlot(slotIndex, false);
             Destroy(gameObject);
         }
     }
@@ -60,9 +65,10 @@ public class ItemCollector : MonoBehaviour, IInteractable
     {
         if (_inventory == null) return -1;
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < _inventory.SlotCount; i++)
         {
-            if (_inventory.GetSlot(i).IsEmpty) return i;
+            InventorySlot slot = _inventory.GetSlot(i);
+            if (slot != null && slot.IsEmpty) return i;
         }
         Debug.LogWarning("Inventario lleno!");
         return -1;

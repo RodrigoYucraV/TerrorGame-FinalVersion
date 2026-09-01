@@ -5,44 +5,43 @@ public class GamePacingManager : MonoBehaviour, IEnemyStatsProvider
 {
     public static GamePacingManager Instance { get; private set; }
 
-    [Header("1. Curvas de Tensión")]
-    [Tooltip("Eje X: Minutos jugados, Eje Y: Multiplicador de estrés (0 a 1)")]
+    [Header("1. Curvas de Tensiï¿½n")]
+    [Tooltip("Eje X: Minutos jugados, Eje Y: Multiplicador de estrï¿½s (0 a 1)")]
     [SerializeField] private AnimationCurve timeDifficultyCurve;
-    [Tooltip("Eje X: % Objetivos, Eje Y: Multiplicador de estrés (0 a 1)")]
+    [Tooltip("Eje X: % Objetivos, Eje Y: Multiplicador de estrï¿½s (0 a 1)")]
     [SerializeField] private AnimationCurve progressDifficultyCurve;
 
-    [Header("2. Stats Dinámicos (Rango)")]
-    [Tooltip("Velocidad cuando el estrés es 0")]
+    [Header("2. Stats Dinï¿½micos (Rango)")]
+    [Tooltip("Velocidad cuando el estrï¿½s es 0")]
     [SerializeField] private float minChaseSpeed = 3.5f;
-    [Tooltip("Velocidad cuando el estrés es 1 (Máxima tensión)")]
+    [Tooltip("Velocidad cuando el estrï¿½s es 1 (Mï¿½xima tensiï¿½n)")]
     [SerializeField] private float maxChaseSpeed = 7.5f;
 
     [Space(10)]
     [SerializeField] private float minLightDamage = 10f;
     [SerializeField] private float maxLightDamage = 50f;
 
-    [Header("3. Configuración de Comportamiento")]
+    [Header("3. Configuraciï¿½n de Comportamiento")]
     [SerializeField] private float followDistance = 10f;
     [SerializeField] private float approachDistance = 5f;
     [SerializeField] private float lateralAngle = 45f;
     [SerializeField] private float chaseThreshold = 15f;
 
-    [Header("4. Configuración de Huida (Retreat)")]
-    [Tooltip("Tiempo de huida cuando el estrés es bajo (fácil)")]
+    [Header("4. Configuraciï¿½n de Huida (Retreat)")]
+    [Tooltip("Tiempo de huida cuando el estrï¿½s es bajo (fï¿½cil)")]
     [SerializeField] private float maxRetreatDuration = 5.0f;
-    [Tooltip("Tiempo de huida cuando el estrés es alto (difícil)")]
+    [Tooltip("Tiempo de huida cuando el estrï¿½s es alto (difï¿½cil)")]
     [SerializeField] private float minRetreatDuration = 2.0f;
 
 
     [Header("Curva de Recursos")]
-    [Tooltip("Si el jugador tiene muchas pilas, ¿cuánto sube la dificultad?")]
+    [Tooltip("Si el jugador tiene muchas pilas, ï¿½cuï¿½nto sube la dificultad?")]
     [SerializeField] private AnimationCurve resourceTensionCurve;
 
-    private float _objectiveProgress;
+    private float _missionProgress;
     private float _playerResourcePower;
 
     // Estado interno
-    private float _currentMissionProgress = 0f;
     private float _levelStartTime;
     private DynamicEnemyConfig _dynamicConfig;
 
@@ -52,7 +51,7 @@ public class GamePacingManager : MonoBehaviour, IEnemyStatsProvider
     public float CurrentLightDamage => Mathf.Lerp(minLightDamage, maxLightDamage, GetCurrentStress());
 
     // --- NUEVA PROPIEDAD PARA ARREGLAR TU ERROR ---
-    // Cuanto más estrés, MENOS tiempo huye (vuelve más rápido a por ti)
+    // Cuanto mï¿½s estrï¿½s, MENOS tiempo huye (vuelve mï¿½s rï¿½pido a por ti)
     public float CurrentRetreatDuration => Mathf.Lerp(maxRetreatDuration, minRetreatDuration, GetCurrentStress());
 
     private void Awake()
@@ -73,7 +72,7 @@ public class GamePacingManager : MonoBehaviour, IEnemyStatsProvider
 
     public void UpdateMissionProgress(float progress01)
     {
-        _currentMissionProgress = Mathf.Clamp01(progress01);
+        _missionProgress = Mathf.Clamp01(progress01);
     }
 
     public float GetCurrentStress()
@@ -83,15 +82,15 @@ public class GamePacingManager : MonoBehaviour, IEnemyStatsProvider
         float stressTime = timeDifficultyCurve.Evaluate(timeMin);
 
         // 2. Objetivos (Lineal)
-        float stressObj = progressDifficultyCurve.Evaluate(_objectiveProgress);
+        float stressObj = progressDifficultyCurve.Evaluate(_missionProgress);
 
         // 3. Recursos (Nuevo)
-        // Si resourcePower es alto (tienes muchas pilas), la curva debería devolver un valor alto
-        // para que el enemigo sea más rápido y te obligue a gastarlas.
+        // Si resourcePower es alto (tienes muchas pilas), la curva deberï¿½a devolver un valor alto
+        // para que el enemigo sea mï¿½s rï¿½pido y te obligue a gastarlas.
         float stressResources = resourceTensionCurve.Evaluate(_playerResourcePower);
 
-        // FÓRMULA MAESTRA:
-        // El estrés es el máximo entre el Tiempo y (Progreso + Penalización por tener muchas pilas)
+        // Fï¿½RMULA MAESTRA:
+        // El estrï¿½s es el mï¿½ximo entre el Tiempo y (Progreso + Penalizaciï¿½n por tener muchas pilas)
         float totalStress = Mathf.Max(stressTime, (stressObj + stressResources * 0.5f));
 
         return Mathf.Clamp01(totalStress);
@@ -123,7 +122,7 @@ public class GamePacingManager : MonoBehaviour, IEnemyStatsProvider
     }
     public void UpdateGameState(float objectiveProg, float resourcePow)
     {
-        _objectiveProgress = objectiveProg;
+        _missionProgress = Mathf.Clamp01(objectiveProg);
         _playerResourcePower = resourcePow;
     }
 }

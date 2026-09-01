@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
 
 [RequireComponent(typeof(FlashlightVisualController))]
 public class FlashlightSystem : MonoBehaviour
@@ -15,6 +14,16 @@ public class FlashlightSystem : MonoBehaviour
 
     private void Awake()
     {
+        if (_battery == null) _battery = GetComponent<FlashLigthBattery>();
+        if (_visuals == null) _visuals = GetComponent<FlashlightVisualController>();
+
+        if (_battery == null || _visuals == null)
+        {
+            Debug.LogError("FlashlightSystem: faltan referencias de baterÃ­a o visuales.");
+            enabled = false;
+            return;
+        }
+
         _battery.Initialize();
         _battery.OnCriticalLevel += HandleCriticalBattery;
         _battery.OnBatteryDepleted += HandleBatteryDepletion;
@@ -23,7 +32,7 @@ public class FlashlightSystem : MonoBehaviour
     private void HandleCriticalBattery()
     {
         _visuals.EnableFlickerEffects(true);
-        _visuals.ModifySoundPitch(1.5f); // Sonido más agudo de advertencia
+        _visuals.ModifySoundPitch(1.5f); // Sonido mï¿½s agudo de advertencia
     }
 
     private void HandleBatteryDepletion()
@@ -43,6 +52,8 @@ public class FlashlightSystem : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_battery == null) return;
+
         _battery.OnCriticalLevel -= HandleCriticalBattery;
         _battery.OnBatteryDepleted -= HandleBatteryDepletion;
     }
@@ -56,12 +67,12 @@ public class FlashlightSystem : MonoBehaviour
     private void HandleInput()
     {
         if (_input.TogglePressed) Toggle(!_isActive);
-        if (_input.RechargePressed) _battery.Recharge(30);
+        if (_input.RechargePressed && _battery != null) _battery.Recharge(30);
     }
 
     private void UpdateBattery()
     {
-        if (_isActive)
+        if (_isActive && _battery != null && _visuals != null)
         {
             _battery.Drain(_battery.HasCharge ? 1f : 0f);
             _visuals.SetIntensity(_battery.CurrentCharge / 100f);
@@ -72,9 +83,10 @@ public class FlashlightSystem : MonoBehaviour
     public void Toggle(bool state)
     {
         if (_isActive == state) return; // Importante para evitar retrigger
+        if (_visuals == null) return;
 
         _isActive = state;
-        _visuals.Toggle(state, playSound: true); // Ahora con control explícito
+        _visuals.Toggle(state, playSound: true); // Ahora con control explï¿½cito
     }
     private void SetInitialState(bool state)
     {

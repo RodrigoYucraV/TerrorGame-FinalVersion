@@ -130,6 +130,13 @@ public class EnemyController : MonoBehaviour
         stateMachine.SetState(currentState);
     }
 
+    public void ReturnToStealthAfterRespawn()
+    {
+        isDying = false;
+        if (healthSystem != null) healthSystem.ResetHealth();
+        GoToStealthState();
+    }
+
     private void HandleLightScare()
     {// GUARDIA DE SEGURIDAD
         if (safeZoneProvider == null)
@@ -165,22 +172,13 @@ public class EnemyController : MonoBehaviour
         stateMachine.SetState(currentState);
     }
 
-    // ... (HandleDeathByLight, OnRespawnReset, OnDestroy igual) ...
     private void HandleDeathByLight()
     {
         if (isDying) return;
         isDying = true;
-        var burnState = new FlashlightBurnStateLogic(this, stateMachine, visibilityController, respawnHandler);
-        if (respawnHandler != null) respawnHandler.OnRespawnComplete += OnRespawnReset;
+        var burnState = new FlashlightBurnStateLogic(this, visibilityController, respawnHandler);
         currentState = burnState;
         stateMachine.SetState(currentState);
-    }
-
-    private void OnRespawnReset()
-    {
-        isDying = false;
-        if (healthSystem != null) healthSystem.ResetHealth();
-        if (respawnHandler != null) respawnHandler.OnRespawnComplete -= OnRespawnReset;
     }
 
     private void OnDestroy()

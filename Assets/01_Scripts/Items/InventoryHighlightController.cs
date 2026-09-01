@@ -40,6 +40,19 @@ public class InventoryHighlightController : MonoBehaviour
     private Tween _fadeTween;
     private Tween _rotateTween;
     private Sequence _pickupSequence; // Usaremos una secuencia para ordenar la animación
+    private Vector3 _pocketInitialScale = Vector3.one;
+
+    private void Awake()
+    {
+        if (highlightCanvasGroup == null && highlight != null) highlightCanvasGroup = highlight.GetComponent<CanvasGroup>();
+        if (highlightCanvasGroup == null && highlight != null) highlightCanvasGroup = highlight.AddComponent<CanvasGroup>();
+        if (iconCanvasGroup == null && iconTransformToAnimate != null) iconCanvasGroup = iconTransformToAnimate.GetComponent<CanvasGroup>();
+        if (iconCanvasGroup == null && iconTransformToAnimate != null) iconCanvasGroup = iconTransformToAnimate.gameObject.AddComponent<CanvasGroup>();
+
+        if (pocketOverlayImage != null) _pocketInitialScale = pocketOverlayImage.transform.localScale;
+
+        ResetPickupVisualState(false);
+    }
 
     private void Start()
     {
@@ -47,19 +60,7 @@ public class InventoryHighlightController : MonoBehaviour
         if (highlight == null) Debug.LogError($"[UI CRITICAL] Falta 'highlight' en {gameObject.name}");
         if (iconTransformToAnimate == null) Debug.LogWarning($"[UI INFO] Falta 'iconTransformToAnimate' en {gameObject.name}");
 
-        if (highlightCanvasGroup == null && highlight != null) highlightCanvasGroup = highlight.GetComponent<CanvasGroup>();
-        if (highlightCanvasGroup == null && highlight != null) highlightCanvasGroup = highlight.AddComponent<CanvasGroup>();
-
         if (highlight != null) highlight.SetActive(false);
-
-        // Ocultar imagen inicial
-        if (iconImage != null)
-        {
-            iconImage.enabled = false;
-            // Nos aseguramos que empiece en la posición final por si acaso
-            if (iconTransformToAnimate != null)
-                iconTransformToAnimate.anchoredPosition = new Vector2(0, endPosY);
-        }
 
         // Asegurar que el bolsillo frontal sea visible si existe
         if (pocketOverlayImage != null) pocketOverlayImage.enabled = true;
@@ -94,10 +95,8 @@ public class InventoryHighlightController : MonoBehaviour
         // -----------------------------------
 
         // 1. Limpieza previa
-        _pickupSequence?.Kill();
-        if (iconTransformToAnimate != null) iconTransformToAnimate.DOKill();
-        if (iconCanvasGroup != null) iconCanvasGroup.DOKill();
-        if (pocketOverlayImage != null) pocketOverlayImage.transform.DOKill();
+        KillPickupTweens();
+        ResetPickupVisualState(true);
 
         // 2. Actualizar Datos
         if (iconImage != null && pickedItemData != null)
@@ -111,13 +110,6 @@ public class InventoryHighlightController : MonoBehaviour
 
         if (iconTransformToAnimate != null && iconCanvasGroup != null)
         {
-          
-            // Colocamos el ítem
-            iconTransformToAnimate.anchoredPosition = new Vector2(0, startPosY);
-            iconTransformToAnimate.localScale = Vector3.one;
-            iconCanvasGroup.alpha = 0f;
-
-           
             //Bajar hasta la posición final (endPosY)
             _pickupSequence.Append(iconTransformToAnimate.DOAnchorPosY(endPosY, slideDuration).SetEase(slideEase));
 
@@ -131,7 +123,44 @@ public class InventoryHighlightController : MonoBehaviour
                 // Usamos Insert para que ocurra un poquito después de empezar a bajar (ej. a los 0.1s)
                 _pickupSequence.Insert(0.1f, pocketOverlayImage.transform.DOPunchScale(new Vector3(0.15f, 0f, 0f), slideDuration * 0.8f, 5, 0.5f));
             }
+
+            // Al finalizar la animación, reseteamos la posición inicial Y y ocultamos el elemento
+            _pickupSequence.OnComplete(() =>
+            {
+                ResetPickupVisualState(false);
+            });
         }
+    }
+
+    private void KillPickupTweens()
+    {
+        _pickupSequence?.Kill(false);
+        _pickupSequence = null;
+
+        if (iconTransformToAnimate != null) iconTransformToAnimate.DOKill(false);
+        if (iconCanvasGroup != null) iconCanvasGroup.DOKill(false);
+        if (pocketOverlayImage != null) pocketOverlayImage.transform.DOKill(false);
+    }
+
+    private void ResetPickupVisualState(bool visibleForAnimation)
+    {
+        if (iconTransformToAnimate != null)
+        {
+            Vector2 startPosition = iconTransformToAnimate.anchoredPosition;
+            startPosition.y = startPosY;
+            iconTransformToAnimate.anchoredPosition = startPosition;
+            iconTransformToAnimate.localScale = Vector3.one;
+        }
+
+        if (iconCanvasGroup != null)
+        {
+            iconCanvasGroup.alpha = 0f;
+            iconCanvasGroup.interactable = false;
+            iconCanvasGroup.blocksRaycasts = false;
+        }
+
+        if (iconImage != null) iconImage.enabled = visibleForAnimation;
+        if (pocketOverlayImage != null) pocketOverlayImage.transform.localScale = _pocketInitialScale;
     }
 
     // --- Métodos privados de Highlight (Sin cambios) ---

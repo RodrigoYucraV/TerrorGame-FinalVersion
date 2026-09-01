@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
 
 public interface IInteractable
 {
@@ -21,7 +20,11 @@ public class ObjectGrabbler : MonoBehaviour
     private void Start()
     {
         if (cameraTransform == null)
-            cameraTransform = Camera.main.transform;
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null) cameraTransform = mainCamera.transform;
+            else Debug.LogError("ObjectGrabbler: falta cameraTransform y no existe Camera.main.");
+        }
     }
 
     private void Update()
@@ -43,6 +46,7 @@ public class ObjectGrabbler : MonoBehaviour
     {
         hitInfo = new RaycastHit();
         interactable = null;
+        if (cameraTransform == null) return false;
 
         Vector3 origin = cameraTransform.position;
         Vector3 direction = cameraTransform.forward;
@@ -80,7 +84,7 @@ public class ObjectGrabbler : MonoBehaviour
         Color debugColor = found ? Color.green : Color.red;
 
         // Dibujamos la línea central
-        Debug.DrawRay(cameraTransform.position, cameraTransform.forward * grabDistance, debugColor);
+        if (cameraTransform != null) Debug.DrawRay(cameraTransform.position, cameraTransform.forward * grabDistance, debugColor);
 
         // Opcional: Dibujar la esfera en el punto de impacto para ver el volumen
         if (found)
