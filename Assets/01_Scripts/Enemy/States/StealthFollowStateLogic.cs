@@ -61,6 +61,16 @@ public class StealthFollowStateLogic: IEnemyState
 
     public void Tick()
     {
+        if (playerPositionProvider != null)
+        {
+            float dist = Vector3.Distance(enemy.transform.position, playerPositionProvider.PlayerBodyPosition);
+            if (dist <= 2.2f)
+            {
+                enemy.GoToAttackState();
+                return;
+            }
+        }
+
         // Si nos tienen que detener y NO estamos en modo agresivo
         if (isMovementStopped && !ignoreSight)
         {

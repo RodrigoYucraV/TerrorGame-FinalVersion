@@ -9,6 +9,7 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private bool isEnraged = false;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip screamSound;
+    [SerializeField] private AudioClip attackSound;
 
     private EnemyStateMachine stateMachine;
 
@@ -127,6 +128,18 @@ public class EnemyController : MonoBehaviour
             moveConfig,
             isEnraged
         );
+        stateMachine.SetState(currentState);
+    }
+
+    public void GoToStealthStatePublic()
+    {
+        GoToStealthState();
+    }
+
+    public void GoToAttackState()
+    {
+        if (isDying || isInvulnerable) return;
+        currentState = new AttackStateLogic(this, stateMachine, playerPositionProvider, enemyMovement, audioSource, attackSound);
         stateMachine.SetState(currentState);
     }
 

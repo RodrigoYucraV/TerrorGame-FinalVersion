@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ItemCollector : MonoBehaviour, IInteractable
@@ -14,7 +13,6 @@ public class ItemCollector : MonoBehaviour, IInteractable
 
     private void Awake()
     {
-        // Buscar el InventorySystem de forma segura
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -28,6 +26,16 @@ public class ItemCollector : MonoBehaviour, IInteractable
         {
             Debug.LogError("�No se encontr� un GameObject con tag 'Player'!");
         }
+    }
+
+    public string GetInteractionPrompt()
+    {
+        return _itemData != null ? $"Recoger {_itemData.displayName}" : "Recoger objeto";
+    }
+
+    public void OnInteract()
+    {
+        OnGrabbed(null);
     }
 
     public void OnGrabbed(Transform holder)
@@ -46,20 +54,40 @@ public class ItemCollector : MonoBehaviour, IInteractable
         }
     }
 
-    private IEnumerator CollectItemProcess(int slotIndex)
+ private IEnumerator CollectItemProcess(int slotIndex)
     {
+        // Mostrar animación del item recogido
+        if (inventoryUI != null)
+        {
+            inventoryUI.HighlightSlot(slotIndex, true);
+        }
 
-        if (inventoryUI != null) inventoryUI.HighlightSlot(slotIndex, true);
+        // Esperar únicamente el tiempo necesario para completar la animación
         yield return new WaitForSeconds(highlightDuration);
 
-        // A�adir �tem
-        if (_inventory != null)
+        if (_inventory == null)
+            yield break;
+
+        // Agregar el item al inventario
+        _inventory.AddItemToSlot(
+            _itemData.displayName,
+            slotIndex,
+            ItemID,
+            1
+        );
+
+        // IMPORTANTE:
+        // No volver a tocar la animación del icono aquí.
+        // Solo terminar la selección del slot.
+        if (inventoryUI != null)
         {
-            _inventory.AddItemToSlot(_itemData.displayName, slotIndex, ItemID, 1);
-            if (inventoryUI != null) inventoryUI.HighlightSlot(slotIndex, false);
-            Destroy(gameObject);
+            inventoryUI.HighlightSlot(slotIndex, false);
         }
+
+        Destroy(gameObject);
     }
+
+
 
     private int FindEmptySlot()
     {

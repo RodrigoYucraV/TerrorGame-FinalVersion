@@ -1,187 +1,511 @@
 ﻿using DG.Tweening;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; 
+using UnityEngine.UI;
 
 public class InventoryHighlightController : MonoBehaviour
 {
-    public Sprite testSprite;
-    [Header("Componentes Propios")]
+    [Header("Highlight")]
     [SerializeField] private GameObject highlight;
     [SerializeField] private CanvasGroup highlightCanvasGroup;
 
-    [Header("Referencias al Ítem")]
-    // ESTE ES EL QUE MOVEREMOS (El contenedor o la imagen misma)
+    [Header("Icono de animación")]
     [SerializeField] private RectTransform iconTransformToAnimate;
     [SerializeField] private CanvasGroup iconCanvasGroup;
     [SerializeField] private Image iconImage;
 
-    [Header("Referencias al Bolsillo")]
-    // ✅ NUEVO: La imagen del bolsillo que va POR DELANTE del ítem
+    [Header("Bolsillo")]
     [SerializeField] private Image pocketOverlayImage;
-    // ✅ NUEVO: Un pequeño "bulto" en el bolsillo al guardar algo
     [SerializeField] private bool animatePocketBulge = true;
 
-    [Header("Configuración Animación ")]
-    [SerializeField] private float slideDuration = 0.5f;
-    [Tooltip("La posición Y desde donde empieza a bajar el ítem (arriba)")]
+    [Header("Animación Pickup")]
+    [SerializeField] private float slideDuration = 0.8f;
     [SerializeField] private float startPosY = 100f;
-    [Tooltip("La posición Y final donde queda guardado (abajo, asomando un poco)")]
-    [SerializeField] private float endPosY = -30f; // Ajusta este valor negativo para que asome más o menos
-    [SerializeField] private Ease slideEase = Ease.OutQuart;
+    [SerializeField] private float endPosY = 0f;
+    [SerializeField] private Ease slideEase = Ease.Linear;
 
+    [Header("Visibilidad del Pickup")]
+    [Tooltip("Tiempo que el item permanece completamente nítido y quieto.")]
+    [SerializeField] private float visibleDuration = 2f;
 
-    [Header("Configuración Animación Highlight (Rotación)")]
-    [SerializeField] private float fadeDuration = 0.2f;
+    [Tooltip("Tiempo que tarda el item en desaparecer mientras baja.")]
+    [SerializeField] private float pickupFadeDuration = 0.8f;
+
+    [Header("Highlight")]
+    [SerializeField] private float fadeDuration = 2.5f;
     [SerializeField] private float rotateAngle = 45f;
-    [SerializeField] private float rotateDuration = 0.8f;
+    [SerializeField] private float rotateDuration = 2f;
 
     private Tween _fadeTween;
     private Tween _rotateTween;
-    private Sequence _pickupSequence; // Usaremos una secuencia para ordenar la animación
+    private Sequence _pickupSequence;
+
     private Vector3 _pocketInitialScale = Vector3.one;
+
+    // Identifica cuál es la animación actual.
+    // Evita que una animación anterior interfiera con una nueva.
+    private int _pickupVersion = 0;
+
+
+    // ============================================================
+    // AWAKE
+    // ============================================================
 
     private void Awake()
     {
-        if (highlightCanvasGroup == null && highlight != null) highlightCanvasGroup = highlight.GetComponent<CanvasGroup>();
-        if (highlightCanvasGroup == null && highlight != null) highlightCanvasGroup = highlight.AddComponent<CanvasGroup>();
-        if (iconCanvasGroup == null && iconTransformToAnimate != null) iconCanvasGroup = iconTransformToAnimate.GetComponent<CanvasGroup>();
-        if (iconCanvasGroup == null && iconTransformToAnimate != null) iconCanvasGroup = iconTransformToAnimate.gameObject.AddComponent<CanvasGroup>();
+        // --------------------------------------------------------
+        // HIGHLIGHT
+        // --------------------------------------------------------
 
-        if (pocketOverlayImage != null) _pocketInitialScale = pocketOverlayImage.transform.localScale;
+        if (highlightCanvasGroup == null && highlight != null)
+        {
+            highlightCanvasGroup =
+                highlight.GetComponent<CanvasGroup>();
 
-        ResetPickupVisualState(false);
+            if (highlightCanvasGroup == null)
+            {
+                highlightCanvasGroup =
+                    highlight.AddComponent<CanvasGroup>();
+            }
+        }
+
+        // --------------------------------------------------------
+        // ICONO DE PICKUP
+        // --------------------------------------------------------
+
+        if (iconTransformToAnimate != null)
+        {
+            if (iconCanvasGroup == null)
+            {
+                iconCanvasGroup =
+                    iconTransformToAnimate.GetComponent<CanvasGroup>();
+
+                if (iconCanvasGroup == null)
+                {
+                    iconCanvasGroup =
+                        iconTransformToAnimate.gameObject
+                        .AddComponent<CanvasGroup>();
+                }
+            }
+
+            // ====================================================
+            // MUY IMPORTANTE
+            // ====================================================
+            //
+            // El icono de pickup NO debe heredar el alpha
+            // de los CanvasGroup padres.
+            //
+            // Esto evita que InventoryVisibilityController
+            // lo haga aparecer transparente.
+            //
+            iconCanvasGroup.ignoreParentGroups = true;
+        }
+
+        // --------------------------------------------------------
+        // BOLSILLO
+        // --------------------------------------------------------
+
+        if (pocketOverlayImage != null)
+        {
+            _pocketInitialScale =
+                pocketOverlayImage.transform.localScale;
+        }
+
+        ResetPickupVisualState();
     }
+
+
+    // ============================================================
+    // START
+    // ============================================================
 
     private void Start()
     {
-        // --- Validaciones de seguridad ---
-        if (highlight == null) Debug.LogError($"[UI CRITICAL] Falta 'highlight' en {gameObject.name}");
-        if (iconTransformToAnimate == null) Debug.LogWarning($"[UI INFO] Falta 'iconTransformToAnimate' en {gameObject.name}");
+        if (highlight != null)
+            highlight.SetActive(false);
 
-        if (highlight != null) highlight.SetActive(false);
-
-        // Asegurar que el bolsillo frontal sea visible si existe
-        if (pocketOverlayImage != null) pocketOverlayImage.enabled = true;
+        if (pocketOverlayImage != null)
+            pocketOverlayImage.enabled = true;
     }
 
-    // --- Lógica de selección (Se mantiene igual) ---
-    public void SetHighlight(bool active)
-    {
-        // 1. Matamos cualquier animación (de encendido o de apagado) que estuviera ocurriendo
-        _fadeTween?.Kill();
-        _rotateTween?.Kill();
 
-        //if (active) ActivateHighlight();
-        //else DeactivateHighlight();
-    }
+    // ============================================================
+    // PICKUP
+    // ============================================================
 
-    // ✅ NUEVA LÓGICA DE RECOGER ÍTEM (Bolsillo)
-    public void PlayPickupAnimation(InventoryItemData pickedItemData)
+    public void PlayPickupAnimation(
+        InventoryItemData pickedItemData)
     {
+        // --------------------------------------------------------
+        // VALIDAR ITEM
+        // --------------------------------------------------------
+
         if (pickedItemData == null)
         {
-            Debug.LogError("🚨 ¡ALERTA! Me pidieron animar, pero 'pickedItemData' llegó VACÍO (Null). Revisa tu script de Inventario.");
-        }
-        else if (pickedItemData.icon == null)
-        {
-            Debug.LogError($"🚨 ¡ALERTA! El ítem '{pickedItemData.name}' llegó bien, pero NO TIENE FOTO asignada en su ScriptableObject.");
-        }
-        else
-        {
-            Debug.Log($"✅ Todo correcto: Animizando la llave: {pickedItemData.name}");
-        }
-        // -----------------------------------
+            Debug.LogError(
+                "[Pickup] pickedItemData es NULL."
+            );
 
-        // 1. Limpieza previa
+            return;
+        }
+
+        if (pickedItemData.icon == null)
+        {
+            Debug.LogError(
+                $"[Pickup] '{pickedItemData.name}' no tiene icon asignado."
+            );
+
+            return;
+        }
+
+        // --------------------------------------------------------
+        // VALIDAR REFERENCIAS
+        // --------------------------------------------------------
+
+        if (iconTransformToAnimate == null ||
+            iconCanvasGroup == null ||
+            iconImage == null)
+        {
+            Debug.LogError(
+                $"[Pickup] Faltan referencias del icono de animación " +
+                $"en '{gameObject.name}'."
+            );
+
+            return;
+        }
+
+        // --------------------------------------------------------
+        // NUEVA VERSIÓN
+        // --------------------------------------------------------
+
+        int currentVersion = ++_pickupVersion;
+
+        // Cancelar cualquier animación anterior.
         KillPickupTweens();
-        ResetPickupVisualState(true);
 
-        // 2. Actualizar Datos
-        if (iconImage != null && pickedItemData != null)
+        // --------------------------------------------------------
+        // POSICIÓN INICIAL
+        // --------------------------------------------------------
+
+        Vector2 position =
+            iconTransformToAnimate.anchoredPosition;
+
+        position.y = startPosY;
+
+        iconTransformToAnimate.anchoredPosition =
+            position;
+
+        iconTransformToAnimate.localScale =
+            Vector3.one;
+
+
+        // --------------------------------------------------------
+        // ALPHA INICIAL
+        // --------------------------------------------------------
+        //
+        // EL ITEM COMIENZA 100% NÍTIDO.
+        //
+        // --------------------------------------------------------
+
+        iconCanvasGroup.ignoreParentGroups = true;
+
+        iconCanvasGroup.alpha = 1f;
+
+        iconCanvasGroup.interactable = false;
+        iconCanvasGroup.blocksRaycasts = false;
+
+
+        // --------------------------------------------------------
+        // ASIGNAR SPRITE
+        // --------------------------------------------------------
+
+        iconImage.sprite =
+            pickedItemData.icon;
+
+        iconImage.enabled = true;
+
+
+        // --------------------------------------------------------
+        // ASEGURAR GAMEOBJECT ACTIVO
+        // --------------------------------------------------------
+
+        if (!iconTransformToAnimate.gameObject.activeSelf)
         {
-            iconImage.sprite = pickedItemData.icon;
-            iconImage.enabled = true;
+            iconTransformToAnimate.gameObject.SetActive(true);
         }
 
-        // 3. Crear la secuencia de animación
-        _pickupSequence = DOTween.Sequence();
 
-        if (iconTransformToAnimate != null && iconCanvasGroup != null)
+        // ========================================================
+        // CREAR SECUENCIA
+        // ========================================================
+
+        _pickupSequence =
+            DOTween.Sequence();
+
+
+        // ========================================================
+        // 1. PERMANECE NÍTIDO
+        // ========================================================
+        //
+        // Durante este tiempo:
+        //
+        // Alpha = 1
+        // Posición = startPosY
+        //
+        // NO BAJA
+        // NO HACE FADE
+        //
+        // ========================================================
+
+        _pickupSequence.AppendInterval(
+            visibleDuration
+        );
+
+
+        // ========================================================
+        // 2. EMPIEZA A BAJAR
+        // ========================================================
+
+        _pickupSequence.Append(
+            iconTransformToAnimate
+                .DOAnchorPosY(
+                    endPosY,
+                    slideDuration
+                )
+                .SetEase(slideEase)
+        );
+
+
+        // ========================================================
+        // 3. FADE OUT MIENTRAS BAJA
+        // ========================================================
+
+        _pickupSequence.Join(
+            iconCanvasGroup
+                .DOFade(
+                    0f,
+                    pickupFadeDuration
+                )
+                .SetEase(Ease.InQuad)
+        );
+
+
+        // ========================================================
+        // 4. ANIMACIÓN DEL BOLSILLO
+        // ========================================================
+
+        if (pocketOverlayImage != null &&
+            animatePocketBulge)
         {
-            //Bajar hasta la posición final (endPosY)
-            _pickupSequence.Append(iconTransformToAnimate.DOAnchorPosY(endPosY, slideDuration).SetEase(slideEase));
+            _pickupSequence.Insert(
+                visibleDuration + 0.1f,
 
-       
-            _pickupSequence.Join(iconCanvasGroup.DOFade(1f, slideDuration * 0.03f)); // Aparece rápido al principio
+                pocketOverlayImage.transform
+                    .DOPunchScale(
+                        new Vector3(
+                            0.15f,
+                            0f,
+                            0f
+                        ),
+                        slideDuration * 0.8f,
+                        5,
+                        0.5f
+                    )
+            );
+        }
 
-            
-            if (pocketOverlayImage != null && animatePocketBulge)
+
+        // ========================================================
+        // 5. FINAL
+        // ========================================================
+
+        Sequence sequenceCreated =
+            _pickupSequence;
+
+        sequenceCreated.OnComplete(() =>
+        {
+            // Si ya existe un pickup más reciente,
+            // esta animación no puede modificarlo.
+
+            if (currentVersion != _pickupVersion)
+                return;
+
+            ResetPickupVisualState();
+
+            if (_pickupSequence == sequenceCreated)
             {
-                // Hacemos que el bolsillo se ensanche un poquito justo cuando el ítem entra
-                // Usamos Insert para que ocurra un poquito después de empezar a bajar (ej. a los 0.1s)
-                _pickupSequence.Insert(0.1f, pocketOverlayImage.transform.DOPunchScale(new Vector3(0.15f, 0f, 0f), slideDuration * 0.8f, 5, 0.5f));
+                _pickupSequence = null;
             }
-
-            // Al finalizar la animación, reseteamos la posición inicial Y y ocultamos el elemento
-            _pickupSequence.OnComplete(() =>
-            {
-                ResetPickupVisualState(false);
-            });
-        }
+        });
     }
 
-    private void KillPickupTweens()
-    {
-        _pickupSequence?.Kill(false);
-        _pickupSequence = null;
 
-        if (iconTransformToAnimate != null) iconTransformToAnimate.DOKill(false);
-        if (iconCanvasGroup != null) iconCanvasGroup.DOKill(false);
-        if (pocketOverlayImage != null) pocketOverlayImage.transform.DOKill(false);
-    }
+    // ============================================================
+    // RESET
+    // ============================================================
 
-    private void ResetPickupVisualState(bool visibleForAnimation)
+    private void ResetPickupVisualState()
     {
         if (iconTransformToAnimate != null)
         {
-            Vector2 startPosition = iconTransformToAnimate.anchoredPosition;
-            startPosition.y = startPosY;
-            iconTransformToAnimate.anchoredPosition = startPosition;
-            iconTransformToAnimate.localScale = Vector3.one;
+            Vector2 position =
+                iconTransformToAnimate.anchoredPosition;
+
+            position.y = startPosY;
+
+            iconTransformToAnimate.anchoredPosition =
+                position;
+
+            iconTransformToAnimate.localScale =
+                Vector3.one;
         }
+
 
         if (iconCanvasGroup != null)
         {
+            iconCanvasGroup.ignoreParentGroups = true;
+
             iconCanvasGroup.alpha = 0f;
+
             iconCanvasGroup.interactable = false;
             iconCanvasGroup.blocksRaycasts = false;
         }
 
-        if (iconImage != null) iconImage.enabled = visibleForAnimation;
-        if (pocketOverlayImage != null) pocketOverlayImage.transform.localScale = _pocketInitialScale;
+
+        if (iconImage != null)
+        {
+            iconImage.enabled = false;
+            iconImage.sprite = null;
+        }
+
+
+        if (pocketOverlayImage != null)
+        {
+            pocketOverlayImage.transform.localScale =
+                _pocketInitialScale;
+        }
     }
 
-    // --- Métodos privados de Highlight (Sin cambios) ---
+
+    // ============================================================
+    // CANCELAR TWEENS
+    // ============================================================
+
+    private void KillPickupTweens()
+    {
+        if (_pickupSequence != null)
+        {
+            _pickupSequence.Kill();
+            _pickupSequence = null;
+        }
+
+        if (iconTransformToAnimate != null)
+        {
+            iconTransformToAnimate.DOKill();
+        }
+
+        if (iconCanvasGroup != null)
+        {
+            iconCanvasGroup.DOKill();
+        }
+
+        if (pocketOverlayImage != null)
+        {
+            pocketOverlayImage.transform.DOKill();
+        }
+    }
+
+
+    // ============================================================
+    // HIGHLIGHT
+    // ============================================================
+
+    public void SetHighlight(bool active)
+    {
+        _fadeTween?.Kill();
+        _rotateTween?.Kill();
+
+        if (active)
+            ActivateHighlight();
+        else
+            DeactivateHighlight();
+    }
+
+
     private void ActivateHighlight()
     {
-        if (highlight == null) return;
+        if (highlight == null ||
+            highlightCanvasGroup == null)
+            return;
+
         highlight.SetActive(true);
 
-        // Guardamos las animaciones infinitas
-        _fadeTween = highlightCanvasGroup.DOFade(0.5f, fadeDuration).SetLoops(-1, LoopType.Yoyo);
-        _rotateTween = highlight.transform.DOLocalRotate(new Vector3(0, 0, rotateAngle), rotateDuration, RotateMode.LocalAxisAdd).SetLoops(-1, LoopType.Yoyo);
+        _fadeTween =
+            highlightCanvasGroup
+                .DOFade(
+                    0.5f,
+                    fadeDuration
+                )
+                .SetLoops(
+                    -1,
+                    LoopType.Yoyo
+                );
+
+        _rotateTween =
+            highlight.transform
+                .DOLocalRotate(
+                    new Vector3(
+                        0f,
+                        0f,
+                        rotateAngle
+                    ),
+                    rotateDuration,
+                    RotateMode.LocalAxisAdd
+                )
+                .SetLoops(
+                    -1,
+                    LoopType.Yoyo
+                );
     }
+
 
     private void DeactivateHighlight()
     {
-        if (highlight == null) return;
+        if (highlight == null ||
+            highlightCanvasGroup == null)
+            return;
 
-        // ✅ LA MEJORA: También guardamos las animaciones de apagado en las variables.
-        // Así, si el jugador se arrepiente y vuelve a seleccionar este slot rápido, 
-        // el Kill() de arriba podrá cancelar este apagado a medias.
-        _fadeTween = highlightCanvasGroup.DOFade(0, fadeDuration).OnComplete(() => highlight.SetActive(false)); // Solo se apaga cuando termina el fade
-        _rotateTween = highlight.transform.DOLocalRotate(Vector3.zero, rotateDuration * 0.5f);
+        _fadeTween =
+            highlightCanvasGroup
+                .DOFade(
+                    0f,
+                    fadeDuration
+                )
+                .OnComplete(() =>
+                {
+                    if (highlight != null)
+                        highlight.SetActive(false);
+                });
+
+        _rotateTween =
+            highlight.transform
+                .DOLocalRotate(
+                    Vector3.zero,
+                    rotateDuration * 0.5f
+                );
+    }
+
+
+    // ============================================================
+    // DESTROY
+    // ============================================================
+
+    private void OnDestroy()
+    {
+        _pickupVersion++;
+
+        KillPickupTweens();
+
+        _fadeTween?.Kill();
+        _rotateTween?.Kill();
     }
 }

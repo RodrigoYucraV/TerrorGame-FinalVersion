@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[System.Obsolete("Deprecated. Use EnemyController instead.")]
 public class EnemyBehaviour : MonoBehaviour
 {
     [SerializeField] float _speed;

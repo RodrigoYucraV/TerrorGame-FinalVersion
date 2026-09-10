@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -11,99 +9,277 @@ public class InventoryUI : MonoBehaviour
         public InventoryHighlightController HighlightController;
     }
 
+
     [Header("Referencias")]
     [SerializeField] private SlotData[] _slots;
 
-    // Referencia al script que acabamos de crear arriba
+    [Header("Visibilidad")]
     [SerializeField] private InventoryVisibilityController _visibilityController;
 
-    private IInventoryProvider _inventory;
-    private int _selectedSlotIndex = 0; // Para saber cuál estamos seleccionando
 
-    public void Initialize(IInventoryProvider inventory)
+    private IInventoryProvider _inventory;
+
+    private int _selectedSlotIndex = 0;
+
+
+    // ============================================================
+    // INITIALIZE
+    // ============================================================
+
+    public void Initialize(
+        IInventoryProvider inventory)
     {
         _inventory = inventory;
+
         _inventory.OnSlotUpdated += UpdateSlot;
 
-        // Inicialización
+        // Actualizar los slots sin reproducir
+        // animaciones de pickup.
         UpdateAllSlots();
-        SelectSlot(0); // Empezar seleccionando el primero
+
+        // Seleccionar primer slot.
+        SelectSlot(0);
     }
+
+
+    // ============================================================
+    // UPDATE
+    // ============================================================
 
     private void Update()
     {
         HandleScrollInput();
     }
 
+
+    // ============================================================
+    // SCROLL
+    // ============================================================
+
     private void HandleScrollInput()
     {
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        float scroll =
+            Input.GetAxis("Mouse ScrollWheel");
 
-        if (scroll != 0f)
+        if (scroll == 0f)
+            return;
+
+
+        // --------------------------------------------------------
+        // CAMBIAR SLOT
+        // --------------------------------------------------------
+
+        if (scroll > 0)
+            _selectedSlotIndex--;
+        else
+            _selectedSlotIndex++;
+
+
+        // --------------------------------------------------------
+        // HACER CICLO
+        // --------------------------------------------------------
+
+        if (_selectedSlotIndex < 0)
         {
-            // Cambiar índice basado en el scroll
-            if (scroll > 0) _selectedSlotIndex--;
-            else _selectedSlotIndex++;
+            _selectedSlotIndex =
+                _slots.Length - 1;
+        }
 
-            // Matemáticas para hacer ciclo (0 -> 1 -> 2 -> 3 -> 0)
-            if (_selectedSlotIndex < 0) _selectedSlotIndex = _slots.Length - 1;
-            if (_selectedSlotIndex >= _slots.Length) _selectedSlotIndex = 0;
+        if (_selectedSlotIndex >= _slots.Length)
+        {
+            _selectedSlotIndex = 0;
+        }
 
-            // Aplicar selección y mostrar UI
-            SelectSlot(_selectedSlotIndex);
 
-            // ¡AQUÍ ESTÁ LA MAGIA! Mostramos la UI al mover la rueda
-            if (_visibilityController != null) _visibilityController.ShowBriefly();
+        // --------------------------------------------------------
+        // SELECCIONAR
+        // --------------------------------------------------------
+
+        SelectSlot(
+            _selectedSlotIndex
+        );
+
+
+        // --------------------------------------------------------
+        // MOSTRAR INVENTARIO
+        // --------------------------------------------------------
+
+        if (_visibilityController != null)
+        {
+            _visibilityController.ShowBriefly();
         }
     }
+
+
+    // ============================================================
+    // SELECT SLOT
+    // ============================================================
 
     private void SelectSlot(int index)
     {
-        // Apagar todos los highlights
-        for (int i = 0; i < _slots.Length; i++)
+        // Apagar todos los highlights.
+
+        for (int i = 0;
+             i < _slots.Length;
+             i++)
         {
-            HighlightSlot(i, false);
+            HighlightSlot(
+                i,
+                false
+            );
         }
-        // Encender solo el seleccionado
-        HighlightSlot(index, true);
+
+
+        // Encender seleccionado.
+
+        HighlightSlot(
+            index,
+            true
+        );
     }
+
+
+    // ============================================================
+    // UPDATE SLOT
+    // ============================================================
 
     private void UpdateSlot(int slotIndex)
     {
-        if (!IsValidIndex(slotIndex)) return;
-
-        var slot = _inventory.GetSlot(slotIndex);
-        _slots[slotIndex].UISlot.UpdateSlot(slot);
-
-        if (!slot.IsEmpty)
-        {
-            // ✅ AQUÍ ESTÁ LA SOLUCIÓN:
-            // Le pasamos la data del ítem que está dentro del 'slot'
-            _slots[slotIndex].HighlightController.PlayPickupAnimation(slot.Data);
-
-            // ¡MAGIA 2! Mostramos la UI al recoger algo
-            if (_visibilityController != null) _visibilityController.ShowBriefly();
-        }
+        UpdateSlotInternal(
+            slotIndex,
+            true
+        );
     }
 
-    // ... Resto de métodos (HighlightSlot, IsValidIndex, OnDestroy) se mantienen igual ...
-    public void HighlightSlot(int slotIndex, bool state)
+
+    // ============================================================
+    // UPDATE SLOT INTERNAL
+    // ============================================================
+
+    private void UpdateSlotInternal(
+        int slotIndex,
+        bool playPickupAnimation)
     {
-        if (IsValidIndex(slotIndex))
+        if (!IsValidIndex(slotIndex))
+            return;
+
+
+        var slot =
+            _inventory.GetSlot(
+                slotIndex
+            );
+
+
+        // --------------------------------------------------------
+        // ACTUALIZAR SLOT NORMAL
+        // --------------------------------------------------------
+
+        _slots[slotIndex]
+            .UISlot
+            .UpdateSlot(slot);
+
+
+        // --------------------------------------------------------
+        // PICKUP
+        // --------------------------------------------------------
+
+        if (!slot.IsEmpty &&
+            playPickupAnimation)
         {
-            _slots[slotIndex].HighlightController.SetHighlight(state);
+            // ----------------------------------------------------
+            // PRIMERO:
+            // Mostrar TODA la UI inmediatamente.
+            // ----------------------------------------------------
+
+            if (_visibilityController != null)
+            {
+                _visibilityController
+                    .ShowImmediately();
+            }
+
+
+            // ----------------------------------------------------
+            // DESPUÉS:
+            // Ejecutar animación del item.
+            // ----------------------------------------------------
+
+            if (_slots[slotIndex]
+                    .HighlightController != null)
+            {
+                _slots[slotIndex]
+                    .HighlightController
+                    .PlayPickupAnimation(
+                        slot.Data
+                    );
+            }
         }
     }
+
+
+    // ============================================================
+    // HIGHLIGHT SLOT
+    // ============================================================
+
+    public void HighlightSlot(
+        int slotIndex,
+        bool state)
+    {
+        if (!IsValidIndex(slotIndex))
+            return;
+
+        if (_slots[slotIndex]
+                .HighlightController == null)
+            return;
+
+        _slots[slotIndex]
+            .HighlightController
+            .SetHighlight(state);
+    }
+
+
+    // ============================================================
+    // UPDATE ALL SLOTS
+    // ============================================================
 
     private void UpdateAllSlots()
     {
-        for (int i = 0; i < _slots.Length; i++) UpdateSlot(i);
+        for (int i = 0;
+             i < _slots.Length;
+             i++)
+        {
+            // IMPORTANTE:
+            //
+            // false = actualizar visualmente
+            // pero NO reproducir pickup.
+            //
+            UpdateSlotInternal(
+                i,
+                false
+            );
+        }
     }
 
-    private bool IsValidIndex(int index) => index >= 0 && index < _slots.Length;
+
+    // ============================================================
+    // VALIDAR ÍNDICE
+    // ============================================================
+
+    private bool IsValidIndex(int index)
+    {
+        return index >= 0 &&
+               index < _slots.Length;
+    }
+
+
+    // ============================================================
+    // DESTROY
+    // ============================================================
 
     private void OnDestroy()
     {
-        if (_inventory != null) _inventory.OnSlotUpdated -= UpdateSlot;
+        if (_inventory != null)
+        {
+            _inventory.OnSlotUpdated -= UpdateSlot;
+        }
     }
 }
