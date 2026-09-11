@@ -23,6 +23,7 @@ public class EnemyController : MonoBehaviour
     // Arrastra el script EnemyProperties aquí en el inspector del Prefab.
     [SerializeField] private EnemyProperties defaultStats;
 
+
     private ISafeZoneProvider safeZoneProvider;
     private EnemyLightSensitivity healthSystem;
     private IEnemyStatsProvider statsProvider;

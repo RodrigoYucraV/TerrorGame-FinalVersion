@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class AttackStateLogic : IEnemyState
@@ -7,15 +6,22 @@ public class AttackStateLogic : IEnemyState
     private readonly EnemyStateMachine stateMachine;
     private readonly IPlayerPositionProvider playerPositionProvider;
     private readonly IEnemyMovement movement;
+    private readonly EnemyAttackDetector attackDetector;
 
     private float attackCooldown = 1.5f;
     private float lastAttackTime = -999f;
-    private float attackRange = 2.2f;
     private float attackDamage = 25f;
+
     private AudioClip attackSound;
     private AudioSource audioSource;
 
-    public AttackStateLogic(EnemyController enemy, EnemyStateMachine stateMachine, IPlayerPositionProvider playerPositionProvider, IEnemyMovement movement, AudioSource audioSource, AudioClip attackSound)
+    public AttackStateLogic(
+        EnemyController enemy,
+        EnemyStateMachine stateMachine,
+        IPlayerPositionProvider playerPositionProvider,
+        IEnemyMovement movement,
+        AudioSource audioSource,
+        AudioClip attackSound)
     {
         this.enemy = enemy;
         this.stateMachine = stateMachine;
@@ -23,33 +29,52 @@ public class AttackStateLogic : IEnemyState
         this.movement = movement;
         this.audioSource = audioSource;
         this.attackSound = attackSound;
+
+        attackDetector = enemy.GetComponentInChildren<EnemyAttackDetector>();
+
+        if (attackDetector == null)
+        {
+            Debug.LogError(
+                "[Enemy] AttackStateLogic: No se encontró EnemyAttackDetector dentro del enemigo."
+            );
+        }
     }
 
     public void Enter()
     {
-        if (movement != null) movement.Stop();
+        if (movement != null)
+            movement.Stop();
     }
 
     public void Tick()
     {
-        if (playerPositionProvider == null) return;
+        if (playerPositionProvider == null)
+            return;
 
-        Vector3 playerPos = playerPositionProvider.PlayerBodyPosition;
-        float distance = Vector3.Distance(enemy.transform.position, playerPos);
+        // El rango de ataque ahora lo controla exclusivamente
+        // el DetectionAttack + EnemyAttackDetector.
+        if (attackDetector == null)
+            return;
 
-        // Si el jugador se aleja, volver a acecho/persecución
-        if (distance > attackRange + 0.8f)
+        if (!attackDetector.IsPlayerInside)
         {
             enemy.GoToStealthStatePublic();
             return;
         }
 
+        Vector3 playerPos = playerPositionProvider.PlayerBodyPosition;
+
         // Enfocar la mirada hacia el jugador
         Vector3 dir = (playerPos - enemy.transform.position).normalized;
         dir.y = 0;
+
         if (dir != Vector3.zero)
         {
-            enemy.transform.rotation = Quaternion.Slerp(enemy.transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 10f);
+            enemy.transform.rotation = Quaternion.Slerp(
+                enemy.transform.rotation,
+                Quaternion.LookRotation(dir),
+                Time.deltaTime * 10f
+            );
         }
 
         // Lógica de ataque con cooldown
@@ -62,7 +87,8 @@ public class AttackStateLogic : IEnemyState
 
     public void Exit()
     {
-        // Limpieza si es necesaria
+        if (movement != null)
+            movement.Stop();
     }
 
     private void PerformAttack()
@@ -76,7 +102,9 @@ public class AttackStateLogic : IEnemyState
 
         if (PlayerManager.Instance != null)
         {
-            IDamageable playerDamageable = PlayerManager.Instance.GetComponent<IDamageable>();
+            IDamageable playerDamageable =
+                PlayerManager.Instance.GetComponent<IDamageable>();
+
             if (playerDamageable != null)
             {
                 playerDamageable.TakeDamage(attackDamage);

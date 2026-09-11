@@ -173,7 +173,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -353454697, guid: 8ee913b5b88cace4a873820af323f18f, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1398,7 +1398,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.07877359, y: 0}
   m_AnchorMax: {x: 0.09754717, y: 0.5}
-  m_AnchoredPosition: {x: -43.000122, y: 22}
+  m_AnchoredPosition: {x: -43.000244, y: 22}
   m_SizeDelta: {x: 22.5, y: -11.060303}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5279450848570211774
@@ -1550,7 +1550,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.118226424, y: 0.883}
   m_AnchorMax: {x: 0.2778868, y: 1}
-  m_AnchoredPosition: {x: -11.400269, y: 3.1134033}
+  m_AnchoredPosition: {x: -11.400391, y: 3.1134033}
   m_SizeDelta: {x: -27.298004, y: -6.226801}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8429281068259130965
@@ -1875,7 +1875,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3787147614966595825}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
@@ -2550,13 +2550,15 @@ MonoBehaviour:
   iconImage: {fileID: 1176413571701301988}
   pocketOverlayImage: {fileID: 4456483879395891974}
   animatePocketBulge: 1
-  slideDuration: 1.2
+  slideDuration: 2
   startPosY: 100
   endPosY: 0
-  slideEase: 3
-  fadeDuration: 1.2
+  slideEase: 1
+  visibleDuration: 1.5
+  pickupFadeDuration: 2.5
+  fadeDuration: 2.5
   rotateAngle: 45
-  rotateDuration: 1.2
+  rotateDuration: 2
 --- !u!225 &7096146242430179852
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2568,7 +2570,7 @@ CanvasGroup:
   m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
+  m_IgnoreParentGroups: 1
 --- !u!1 &6331654054194520924
 GameObject:
   m_ObjectHideFlags: 0
@@ -2654,7 +2656,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6331654054194520924}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
@@ -3064,7 +3066,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -353454697, guid: 8ee913b5b88cace4a873820af323f18f, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3290,13 +3292,15 @@ MonoBehaviour:
   iconImage: {fileID: 1858586681160848510}
   pocketOverlayImage: {fileID: 4076811077905741744}
   animatePocketBulge: 1
-  slideDuration: 1.2
+  slideDuration: 2
   startPosY: 100
   endPosY: 0
-  slideEase: 3
-  fadeDuration: 1.2
+  slideEase: 1
+  visibleDuration: 1.5
+  pickupFadeDuration: 1.5
+  fadeDuration: 3
   rotateAngle: 45
-  rotateDuration: 1.2
+  rotateDuration: 2
 --- !u!225 &5262029587057190461
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -3308,7 +3312,7 @@ CanvasGroup:
   m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
+  m_IgnoreParentGroups: 1
 --- !u!1 &7472847657656443005
 GameObject:
   m_ObjectHideFlags: 0
@@ -3718,6 +3722,8 @@ MonoBehaviour:
   startPosY: 100
   endPosY: 0
   slideEase: 3
+  visibleDuration: 1.5
+  pickupFadeDuration: 0.6
   fadeDuration: 1.2
   rotateAngle: 45
   rotateDuration: 1.2
@@ -3927,6 +3933,8 @@ MonoBehaviour:
   startPosY: 100
   endPosY: 0
   slideEase: 3
+  visibleDuration: 1.5
+  pickupFadeDuration: 0.6
   fadeDuration: 1.2
   rotateAngle: 45
   rotateDuration: 1.2

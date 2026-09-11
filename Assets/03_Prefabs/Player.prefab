@@ -67,6 +67,7 @@ GameObject:
   - component: {fileID: 2337815474861388340}
   - component: {fileID: 5340990560784415254}
   - component: {fileID: 2895783264462074666}
+  - component: {fileID: 378174628542041595}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -83,7 +84,7 @@ Transform:
   m_GameObject: {fileID: 614839071552085573}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.248, z: -0.212}
+  m_LocalPosition: {x: -0.03, y: -0.022, z: 0.141}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -193,6 +194,25 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &378174628542041595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 614839071552085573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad196665e1cab474ebb223ccb97e012d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabDistance: 15
+  grabRadius: 1
+  cameraTransform: {fileID: 3658957685072895023}
+  interactableLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  interactionPromptUI: {fileID: 0}
 --- !u!1 &925548924483397186
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,6 +419,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  currentHealth: 0
 --- !u!114 &1760064676427970718
 MonoBehaviour:
   m_ObjectHideFlags: 0

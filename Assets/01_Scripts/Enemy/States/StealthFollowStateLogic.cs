@@ -15,6 +15,7 @@ public class StealthFollowStateLogic: IEnemyState
 
     private bool isMovementStopped;
     private bool ignoreSight; // Nuevo flag para el nivel final
+    private float debugDistanceTimer;
 
     // Constructor actualizado
     public StealthFollowStateLogic(
@@ -63,9 +64,24 @@ public class StealthFollowStateLogic: IEnemyState
     {
         if (playerPositionProvider != null)
         {
-            float dist = Vector3.Distance(enemy.transform.position, playerPositionProvider.PlayerBodyPosition);
+            float dist = Vector3.Distance(
+                enemy.transform.position,
+                playerPositionProvider.PlayerBodyPosition
+            );
+
+            // DEBUG TEMPORAL: mostrar la distancia cada 0.5 segundos
+            debugDistanceTimer -= Time.deltaTime;
+
+            if (debugDistanceTimer <= 0f)
+            {
+               
+                debugDistanceTimer = 0.5f;
+            }
+
             if (dist <= 2.2f)
             {
+               
+
                 enemy.GoToAttackState();
                 return;
             }
@@ -74,11 +90,11 @@ public class StealthFollowStateLogic: IEnemyState
         // Si nos tienen que detener y NO estamos en modo agresivo
         if (isMovementStopped && !ignoreSight)
         {
-            movement.Stop(); // Asegurar parada
+            movement.Stop();
             return;
         }
 
-        // Lógica de movimiento (Curva hacia el jugador)
+        // Lógica de movimiento
         CalculateAndMove();
     }
 

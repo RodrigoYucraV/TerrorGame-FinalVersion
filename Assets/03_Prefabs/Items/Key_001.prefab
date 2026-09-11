@@ -101,9 +101,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7850971f8db62c4c9b0f75d6cc14d4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventoryUI: {fileID: 577493253797937861, guid: e13bd94707aa15248ad282d891743fa4, type: 3}
+  inventoryUI: {fileID: 0}
   _itemData: {fileID: 11400000, guid: b80cf9f304c72864f873677ab9260752, type: 2}
-  highlightDuration: 0.5
+  highlightDuration: 1
 --- !u!65 &6722121763855229514
 BoxCollider:
   m_ObjectHideFlags: 0
