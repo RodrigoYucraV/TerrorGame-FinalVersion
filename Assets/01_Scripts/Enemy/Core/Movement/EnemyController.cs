@@ -6,7 +6,7 @@ using UnityEngine.AI;
 public class EnemyController : MonoBehaviour
 {
     [Header("Evolución / Dificultad")]
-    [SerializeField] private bool isEnraged = false;
+    private bool isEnraged;
 
     public bool IsEnraged => isEnraged;
 
@@ -22,19 +22,24 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private IVisibilityController visibilityController;
     [SerializeField] private IRespawnHandler respawnHandler;
 
-    // ✅ CORRECCIÓN 1: Referencia directa a las propiedades por defecto (Fallback)
-    // Arrastra el script EnemyProperties aquí en el inspector del Prefab.
+    // Fallback de configuración local del enemigo.
     [SerializeField] private EnemyProperties defaultStats;
-
 
     private ISafeZoneProvider safeZoneProvider;
     private EnemyLightSensitivity healthSystem;
     private IEnemyStatsProvider statsProvider;
     private IPlayerPositionProvider playerPositionProvider;
     private IEnemyState currentState;
+
     private bool isDying = false;
     private bool isInvulnerable = false;
+
+    // True solamente cuando la retirada actual fue provocada por la linterna.
+    // Esto evita que la retirada de una evolución termine en un respawn.
+    private bool retreatLeadsToFlashlightBurn = false;
+
     private EnemyJumpHandler jumpHandler;
+
     private void Awake()
     {
         stateMachine = GetComponent<EnemyStateMachine>();
@@ -44,12 +49,15 @@ public class EnemyController : MonoBehaviour
         respawnHandler = GetComponent<IRespawnHandler>();
         healthSystem = GetComponent<EnemyLightSensitivity>();
         jumpHandler = GetComponent<EnemyJumpHandler>();
-        // ✅ CORRECCIÓN 2: Autodetectar si se olvidó asignar en el inspector
+
         if (defaultStats == null)
             defaultStats = GetComponent<EnemyProperties>();
 
-        if (healthSystem == null) Debug.LogError("Falta EnemyLightSensitivity");
-        if (defaultStats == null) Debug.LogError("Falta el componente EnemyProperties (Configuración por defecto)");
+        if (healthSystem == null)
+            Debug.LogError("Falta EnemyLightSensitivity");
+
+        if (defaultStats == null)
+            Debug.LogError("Falta el componente EnemyProperties (Configuración por defecto)");
     }
 
     public void Initialize(IRespawnHandler respawnHandler, ISafeZoneProvider safeZoneProvider)
@@ -60,16 +68,22 @@ public class EnemyController : MonoBehaviour
 
     private void Start()
     {
-        // ... (Tu lógica de SafeZone y Respawn igual) ...
         if (safeZoneProvider == null)
         {
             var manager = FindFirstObjectByType<EnemyManager>();
-            safeZoneProvider = manager;
-            respawnHandler = manager;
+
+            if (manager != null)
+            {
+                safeZoneProvider = manager;
+                respawnHandler = manager;
+            }
         }
 
-        if (PlayerManager.Instance != null) playerPositionProvider = PlayerManager.Instance;
-        if (GamePacingManager.Instance != null) statsProvider = GamePacingManager.Instance;
+        if (PlayerManager.Instance != null)
+            playerPositionProvider = PlayerManager.Instance;
+
+        if (GamePacingManager.Instance != null)
+            statsProvider = GamePacingManager.Instance;
 
         if (healthSystem != null)
         {
@@ -82,19 +96,30 @@ public class EnemyController : MonoBehaviour
 
     private void InitializeState()
     {
-        if (playerPositionProvider != null) GoToStealthState();
+        retreatLeadsToFlashlightBurn = false;
+
+        if (playerPositionProvider != null)
+            GoToStealthState();
     }
 
     private void Update()
     {
-        if (playerDetector is PlayerVisibilityDetector detector) detector.ManualDetect();
-        stateMachine.ManualTick();
+        if (playerDetector is PlayerVisibilityDetector detector)
+            detector.ManualDetect();
 
-        if (currentState is RetreatStateLogic retreatState && retreatState.IsRetreatComplete())
+        stateMachine?.ManualTick();
+
+        // La retirada por linterna termina cuando el enemigo llega físicamente
+        // al refugio. En ese momento comienza la desaparición/respawn.
+        if (currentState is RetreatStateLogic retreatState &&
+            retreatLeadsToFlashlightBurn &&
+            retreatState.HasReachedDestination)
         {
-            GoToStealthState();
+            retreatLeadsToFlashlightBurn = false;
+            BeginFlashlightBurn();
         }
     }
+
     public void HandlePhaseChange(EnemyPhase newPhase)
     {
         StartCoroutine(EvolveRoutine(newPhase));
@@ -109,19 +134,23 @@ public class EnemyController : MonoBehaviour
         HandleFlashlightReaction();
     }
 
-    // ✅ CORRECCIÓN 3: El método conflictivo ahora es seguro y limpio
     private void GoToStealthState()
     {
-        // Lógica de selección: ¿Usamos el manager global o los stats locales del prefab?
-        IEnemyMovementConfig moveConfig = (statsProvider != null) ? statsProvider.CurrentMovementConfig : defaultStats;
-        IFollowSettings followConfig = (statsProvider != null) ? statsProvider.CurrentFollowSettings : defaultStats;
+        IEnemyMovementConfig moveConfig =
+            (statsProvider != null) ? statsProvider.CurrentMovementConfig : defaultStats;
 
-        // Validación de seguridad extra
+        IFollowSettings followConfig =
+            (statsProvider != null) ? statsProvider.CurrentFollowSettings : defaultStats;
+
         if (moveConfig == null || followConfig == null)
         {
-            Debug.LogError("CRÍTICO: No hay configuración de movimiento (ni Global ni Local en EnemyProperties).");
+            Debug.LogError(
+                "CRÍTICO: No hay configuración de movimiento " +
+                "(ni Global ni Local en EnemyProperties).");
             return;
         }
+
+        retreatLeadsToFlashlightBurn = false;
 
         currentState = new StealthFollowStateLogic(
             this,
@@ -131,6 +160,7 @@ public class EnemyController : MonoBehaviour
             moveConfig,
             isEnraged
         );
+
         stateMachine.SetState(currentState);
     }
 
@@ -141,10 +171,21 @@ public class EnemyController : MonoBehaviour
 
     public void GoToAttackState()
     {
-        if (isDying || isInvulnerable) return;
-        currentState = new AttackStateLogic(this, stateMachine, playerPositionProvider, enemyMovement, audioSource, attackSound);
+        if (isDying || isInvulnerable)
+            return;
+
+        currentState = new AttackStateLogic(
+            this,
+            stateMachine,
+            playerPositionProvider,
+            enemyMovement,
+            audioSource,
+            attackSound
+        );
+
         stateMachine.SetState(currentState);
     }
+
     public void HandleFlashlightReaction()
     {
         if (isDying || isInvulnerable || isEnraged)
@@ -153,40 +194,66 @@ public class EnemyController : MonoBehaviour
         if (currentState is RetreatStateLogic)
             return;
 
-        HandleLightScare();
+        // Esta retirada sí debe terminar en desaparición y respawn.
+        HandleLightScare(true);
     }
 
     public void ReturnToStealthAfterRespawn()
     {
         isDying = false;
-        if (healthSystem != null) healthSystem.ResetHealth();
+        retreatLeadsToFlashlightBurn = false;
+
+        if (healthSystem != null)
+            healthSystem.ResetHealth();
+
         GoToStealthState();
     }
 
-    private void HandleLightScare()
-    {// GUARDIA DE SEGURIDAD
+    private void HandleLightScare(bool continueIntoFlashlightBurn)
+    {
+        retreatLeadsToFlashlightBurn = continueIntoFlashlightBurn;
+
         if (safeZoneProvider == null)
         {
             var manager = FindFirstObjectByType<EnemyManager>();
-            if (manager != null) safeZoneProvider = manager;
+
+            if (manager != null)
+            {
+                safeZoneProvider = manager;
+            }
             else
             {
-                Debug.LogError("EnemyController: Imposible entrar en RetreatState. No hay EnemyManager/SafeZoneProvider.");
+                Debug.LogError(
+                    "EnemyController: Imposible entrar en RetreatState. " +
+                    "No hay EnemyManager/SafeZoneProvider."
+                );
+
+                retreatLeadsToFlashlightBurn = false;
                 return;
             }
         }
 
-        if (audioSource != null && screamSound != null) audioSource.PlayOneShot(screamSound);
+        if (audioSource != null && screamSound != null)
+            audioSource.PlayOneShot(screamSound);
 
-        // --- CORRECCIÓN AQUÍ ---
-        // Antes: usabas GetCurrentProfile().retreatDuration
-        // Ahora: usas la propiedad directa CurrentRetreatDuration
-        float retreatDuration = (GamePacingManager.Instance != null)
-            ? GamePacingManager.Instance.CurrentRetreatDuration
-            : 2f; // Valor por defecto si no hay manager
-        // -----------------------
+        float retreatDuration =
+            (GamePacingManager.Instance != null)
+                ? GamePacingManager.Instance.CurrentRetreatDuration
+                : 2f;
 
-        IEnemyMovementConfig moveConfig = (statsProvider != null) ? statsProvider.CurrentMovementConfig : defaultStats;
+        IEnemyMovementConfig moveConfig =
+            (statsProvider != null) ? statsProvider.CurrentMovementConfig : defaultStats;
+
+        if (moveConfig == null)
+        {
+            Debug.LogError(
+                "EnemyController: No existe configuración de movimiento " +
+                "para RetreatState."
+            );
+
+            retreatLeadsToFlashlightBurn = false;
+            return;
+        }
 
         currentState = new RetreatStateLogic(
             this,
@@ -195,14 +262,43 @@ public class EnemyController : MonoBehaviour
             moveConfig,
             retreatDuration
         );
+
         stateMachine.SetState(currentState);
     }
 
     private void HandleDeathByLight()
     {
-        if (isDying) return;
+        // Si todavía está retirándose por la linterna,
+        // NO debemos saltarnos el refugio.
+        if (currentState is RetreatStateLogic)
+            return;
+
+        BeginFlashlightBurn();
+    }
+
+    private void BeginFlashlightBurn()
+    {
+        if (isDying)
+            return;
+
+        if (respawnHandler == null)
+        {
+            Debug.LogError(
+                "EnemyController: No hay IRespawnHandler. " +
+                "No se puede completar el respawn por linterna."
+            );
+            return;
+        }
+
         isDying = true;
-        var burnState = new FlashlightBurnStateLogic(this, visibilityController, respawnHandler);
+        retreatLeadsToFlashlightBurn = false;
+
+        var burnState = new FlashlightBurnStateLogic(
+            this,
+            visibilityController,
+            respawnHandler
+        );
+
         currentState = burnState;
         stateMachine.SetState(currentState);
     }
@@ -215,57 +311,50 @@ public class EnemyController : MonoBehaviour
             healthSystem.OnHealthDepleted -= HandleDeathByLight;
         }
     }
+
     private IEnumerator EvolveRoutine(EnemyPhase phase)
     {
-        // 1. "PAUSA DRAMÁTICA": El enemigo se vuelve invulnerable y grita
         isInvulnerable = true;
 
         if (audioSource != null && screamSound != null)
             audioSource.PlayOneShot(screamSound);
 
-        // Opcional: Forzar una animación de dolor aquí
-        // animator.SetTrigger("Evolve");
+        // La evolución usa retirada, pero NO debe activar respawn por linterna.
+        HandleLightScare(false);
 
-        // 2. HUIDA FORZADA: Busca refugio para transformarse
-        // Nota: Pasamos 'true' (o similar) si tuviéramos un flag de 'ForceRetreat'
-        HandleLightScare();
-
-        // Esperamos a que llegue al refugio o un tiempo fijo (ej. 3 segundos)
         yield return new WaitForSeconds(3.0f);
 
-        // 3. APLICAR LOS PODERES DE LA FASE
         ApplyPhaseStats(phase);
 
-        // 4. Terminar transición
         isInvulnerable = false;
 
-        // Forzamos volver a Stealth con los nuevos poderes activos
         GoToStealthState();
     }
+
     private void ApplyPhaseStats(EnemyPhase phase)
     {
         switch (phase)
         {
             case EnemyPhase.Phase1_Stealth:
                 isEnraged = false;
-                // En fase 1 NO salta. Es una amenaza terrestre.
-                if (jumpHandler != null) jumpHandler.EnableJumping(false);
+
+                if (jumpHandler != null)
+                    jumpHandler.EnableJumping(false);
+
                 break;
 
             case EnemyPhase.Phase2_Jumper:
-                // LÓGICA FASE 2:
-                // 1. Se vuelve agresivo (ignora si lo miras)
                 isEnraged = true;
 
-                // 2. HABILITAMOS EL SALTO
-                // Ahora el Update del JumpHandler empezará a buscar OffMeshLinks
-                if (jumpHandler != null) jumpHandler.EnableJumping(true);
+                if (jumpHandler != null)
+                    jumpHandler.EnableJumping(true);
 
-                // 3. Aumentamos velocidad ligeramente para hacerlo más aterrador
                 if (enemyMovement != null)
                 {
-                    // Asumiendo que puedes modificar la velocidad en tu config o agente
-                    GetComponent<NavMeshAgent>().speed += 2.0f;
+                    NavMeshAgent agent = GetComponent<NavMeshAgent>();
+
+                    if (agent != null)
+                        agent.speed += 2.0f;
                 }
 
                 Debug.Log("<color=yellow>FASE 2: JUMPER ACTIVADO</color>");
@@ -273,10 +362,11 @@ public class EnemyController : MonoBehaviour
 
             case EnemyPhase.Phase3_Flyer:
                 isEnraged = true;
-                // En fase 3 vuela, así que la lógica de salto de NavMesh ya no aplica igual
-                if (jumpHandler != null) jumpHandler.EnableJumping(false);
+
+                if (jumpHandler != null)
+                    jumpHandler.EnableJumping(false);
+
                 break;
         }
     }
 }
-

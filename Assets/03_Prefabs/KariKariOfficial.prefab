@@ -48,7 +48,6 @@ Transform:
   - {fileID: 1827578449050088157}
   - {fileID: 5330012010139977780}
   - {fileID: 8503005250546061548}
-  - {fileID: 2226166064527551492}
   - {fileID: 5602782303727260609}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -60,7 +59,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 142914276935326408}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 338cdabde2c07144b9b54ede3ef4d8d0, type: 2}
   m_CullingMode: 0
@@ -157,8 +156,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.219589, y: 9.535761, z: 3.6862488}
-  m_Center: {x: -0.46112823, y: 4.2678804, z: 0.40133667}
+  m_Size: {x: 5.219589, y: 7.307891, z: 5.059555}
+  m_Center: {x: -0.46112823, y: 5.3818154, z: 2.473732}
 --- !u!54 &570462022434397583
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -300,7 +299,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 873a15f0178172446a0670dbcf27aa68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isEnraged: 1
   audioSource: {fileID: 0}
   screamSound: {fileID: 8300000, guid: bddf16ec81f65a94cafacb430cbd4c45, type: 3}
   attackSound: {fileID: 8300000, guid: 74067740304798547a402067d0b490aa, type: 3}
@@ -324,7 +322,7 @@ MonoBehaviour:
   viewThresholdAngle: 45
   maxViewDistance: 105
   flashlight: {fileID: 0}
-  flashlightDetectionAngle: 45
+  flashlightDetectionAngle: 85
 --- !u!114 &883485298314221681
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1664,61 +1662,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc764bd7a38511d4891fac721e4b8513, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyController: {fileID: 0}
---- !u!1 &6625268303239398115
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2226166064527551492}
-  - component: {fileID: 1548692169123790705}
-  m_Layer: 0
-  m_Name: VisualPivot
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2226166064527551492
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6625268303239398115}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 770233645947388018}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1548692169123790705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6625268303239398115}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb9b96511f6e916498e8c81ae0d0968c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  verticalAmplitude: 0.08
-  verticalFrequency: 0.8
-  pitchAmplitude: 1.5
-  yawAmplitude: 2
-  rollAmplitude: 1.2
-  rotationFrequency: 0.5
-  randomizePhase: 1
-  phaseOffset: 0
-  effectEnabled: 1
-  intensity: 1
+  enemyController: {fileID: 7246393324759036503}
 --- !u!1 &6793716823696472489
 GameObject:
   m_ObjectHideFlags: 0
@@ -1983,6 +1927,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8503005250546061548}
+  - component: {fileID: 7003455507882618557}
   m_Layer: 0
   m_Name: Armature
   m_TagString: Untagged
@@ -2006,6 +1951,28 @@ Transform:
   - {fileID: 4793294712838379962}
   m_Father: {fileID: 770233645947388018}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7003455507882618557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7827102683581586086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb9b96511f6e916498e8c81ae0d0968c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  verticalAmplitude: 0.4
+  verticalFrequency: 0.8
+  pitchAmplitude: 2
+  yawAmplitude: 2
+  rollAmplitude: 1.2
+  rotationFrequency: 0.8
+  randomizePhase: 1
+  phaseOffset: 0
+  effectEnabled: 1
+  intensity: 1
 --- !u!1 &8138190723764103007
 GameObject:
   m_ObjectHideFlags: 0

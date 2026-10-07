@@ -7,58 +7,71 @@ public class FlashlightBurnStateLogic : IEnemyState, IDisposable
     private readonly IVisibilityController visualController;
     private readonly IRespawnHandler respawnHandler;
 
-    private float burnTimeElapsed = 0f;
-    private const float TotalBurnDuration = 1.5f; // Duraci�n del efecto de quemado/desaparici�n
+    private const float TotalBurnDuration = 1.5f;
+    private float burnTimeElapsed;
     private bool respawnRequested;
 
-    public FlashlightBurnStateLogic(EnemyController enemy, IVisibilityController visuals, IRespawnHandler respawner)
+    public FlashlightBurnStateLogic(
+        EnemyController enemy,
+        IVisibilityController visuals,
+        IRespawnHandler respawner)
     {
         this.enemy = enemy;
         this.visualController = visuals;
         this.respawnHandler = respawner;
 
-        // Suscribirse para saber cu�ndo termin� de reaparecer
-        if (respawnHandler != null) respawnHandler.OnRespawnComplete += HandleRespawnComplete;
+        if (respawnHandler != null)
+            respawnHandler.OnRespawnComplete += HandleRespawnComplete;
     }
 
     public void Enter()
     {
-        // Cuando entra: el enemigo se detiene y comienza a desaparecer
-        enemy.GetComponent<IEnemyMovement>()?.Stop();
-        visualController?.FadeOut(TotalBurnDuration);
         burnTimeElapsed = 0f;
         respawnRequested = false;
+
+        // El enemigo ya llegó al refugio antes de entrar aquí.
+        // Este estado se encarga únicamente de desaparecer y reaparecer.
+        visualController?.FadeOut(TotalBurnDuration);
     }
 
     public void Tick()
     {
         burnTimeElapsed += Time.deltaTime;
 
-        if (burnTimeElapsed >= TotalBurnDuration && !respawnRequested)
-        {
-            respawnRequested = true;
-            // 1. Asegurar la invisibilidad y reaparecer
-            visualController?.SetVisibility(false);
-            respawnHandler?.Respawn(enemy.transform);
-            // La transici�n al nuevo estado se har� en HandleRespawnComplete
-        }
+        if (burnTimeElapsed < TotalBurnDuration)
+            return;
+
+        if (respawnRequested)
+            return;
+
+        respawnRequested = true;
+
+        // El objeto permanece invisible mientras EnemyManager
+        // mueve el MISMO Transform a la nueva posición.
+        visualController?.SetVisibility(false);
+
+        respawnHandler?.Respawn(enemy.transform);
     }
 
     public void Exit()
     {
-        // Asegurarse de que el enemigo est� visible y el efecto se detenga
-        visualController?.SetVisibility(true);
+        // No forzamos visibilidad aquí.
+        // HandleRespawnComplete controla la aparición mediante FadeIn().
     }
 
     private void HandleRespawnComplete()
     {
-        visualController?.SetVisibility(true);
+        // El transform ya fue trasladado por EnemyManager.
+        // Se mantiene invisible y se inicia la aparición progresiva.
+        visualController?.SetVisibility(false);
         visualController?.FadeIn(0.5f);
+
         enemy.ReturnToStealthAfterRespawn();
     }
 
     public void Dispose()
     {
-        if (respawnHandler != null) respawnHandler.OnRespawnComplete -= HandleRespawnComplete;
+        if (respawnHandler != null)
+            respawnHandler.OnRespawnComplete -= HandleRespawnComplete;
     }
 }
