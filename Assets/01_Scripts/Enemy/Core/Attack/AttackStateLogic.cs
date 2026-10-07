@@ -3,17 +3,18 @@ using UnityEngine;
 public class AttackStateLogic : IEnemyState
 {
     private readonly EnemyController enemy;
-    private readonly EnemyStateMachine stateMachine;
     private readonly IPlayerPositionProvider playerPositionProvider;
     private readonly IEnemyMovement movement;
-    private readonly EnemyAttackDetector attackDetector;
+    private readonly AudioSource audioSource;
+    private readonly AudioClip attackSound;
+    private readonly IPlayerDetector playerDetector;
 
-    private float attackCooldown = 1.5f;
+    [Header("Configuración del ataque")]
+    private readonly float attackCooldown = 3.5f;
+    private readonly float attackRange = 2.2f;
+    private readonly float attackDamage = 10f;
+
     private float lastAttackTime = -999f;
-    private float attackDamage = 25f;
-
-    private AudioClip attackSound;
-    private AudioSource audioSource;
 
     public AttackStateLogic(
         EnemyController enemy,
@@ -24,91 +25,145 @@ public class AttackStateLogic : IEnemyState
         AudioClip attackSound)
     {
         this.enemy = enemy;
-        this.stateMachine = stateMachine;
         this.playerPositionProvider = playerPositionProvider;
         this.movement = movement;
         this.audioSource = audioSource;
         this.attackSound = attackSound;
 
-        attackDetector = enemy.GetComponentInChildren<EnemyAttackDetector>();
-
-        if (attackDetector == null)
-        {
-            Debug.LogError(
-                "[Enemy] AttackStateLogic: No se encontró EnemyAttackDetector dentro del enemigo."
-            );
-        }
+        playerDetector = enemy != null
+            ? enemy.GetComponent<IPlayerDetector>()
+            : null;
     }
 
     public void Enter()
     {
-        if (movement != null)
-            movement.Stop();
+        movement?.Stop();
+        lastAttackTime = -999f;
+
+        Debug.Log("[Enemy] Entró en AttackState.");
     }
 
     public void Tick()
     {
-        if (playerPositionProvider == null)
+        if (enemy == null || playerPositionProvider == null)
             return;
 
-        // El rango de ataque ahora lo controla exclusivamente
-        // el DetectionAttack + EnemyAttackDetector.
-        if (attackDetector == null)
-            return;
+        // =========================================================
+        // PROTECCIÓN DE FASE 1
+        // =========================================================
 
-        if (!attackDetector.IsPlayerInside)
+        if (!enemy.IsEnraged && playerDetector != null)
+        {
+            // -----------------------------------------------------
+            // 1. SI LA LINTERNA LO ESTÁ GOLPEANDO
+            // -----------------------------------------------------
+
+            if (playerDetector.IsHitByFlashlight)
+            {
+                enemy.HandleFlashlightReaction();
+                return;
+            }
+
+            // -----------------------------------------------------
+            // 2. SI EL JUGADOR LO ESTÁ MIRANDO
+            // -----------------------------------------------------
+
+            if (playerDetector.IsPlayerLookingAtEnemy)
+            {
+                Debug.Log("[Enemy] Attack cancelado: el jugador está mirando.");
+
+                enemy.GoToStealthStatePublic();
+                return;
+            }
+        }
+
+        // =========================================================
+        // DISTANCIA
+        // =========================================================
+
+        Vector3 playerPosition =
+            playerPositionProvider.PlayerBodyPosition;
+
+        Vector3 direction =
+            playerPosition - enemy.transform.position;
+
+        float distance = direction.magnitude;
+
+        // Si el jugador escapa del rango de combate,
+        // volvemos al estado de acecho.
+        if (distance > attackRange + 0.8f)
         {
             enemy.GoToStealthStatePublic();
             return;
         }
 
-        Vector3 playerPos = playerPositionProvider.PlayerBodyPosition;
+        // =========================================================
+        // ORIENTACIÓN
+        // =========================================================
 
-        // Enfocar la mirada hacia el jugador
-        Vector3 dir = (playerPos - enemy.transform.position).normalized;
-        dir.y = 0;
+        direction.y = 0f;
 
-        if (dir != Vector3.zero)
+        if (direction.sqrMagnitude > 0.001f)
         {
+            Quaternion targetRotation =
+                Quaternion.LookRotation(direction);
+
             enemy.transform.rotation = Quaternion.Slerp(
                 enemy.transform.rotation,
-                Quaternion.LookRotation(dir),
+                targetRotation,
                 Time.deltaTime * 10f
             );
         }
 
-        // Lógica de ataque con cooldown
-        if (Time.time >= lastAttackTime + attackCooldown)
-        {
-            PerformAttack();
-            lastAttackTime = Time.time;
-        }
+        // =========================================================
+        // RANGO REAL DEL GOLPE
+        // =========================================================
+
+        if (distance > attackRange)
+            return;
+
+        // =========================================================
+        // COOLDOWN
+        // =========================================================
+
+        if (Time.time < lastAttackTime + attackCooldown)
+            return;
+
+        PerformAttack();
+
+        lastAttackTime = Time.time;
     }
 
     public void Exit()
     {
-        if (movement != null)
-            movement.Stop();
+        // No hay recursos adicionales que liberar por ahora.
     }
 
     private void PerformAttack()
     {
         if (audioSource != null && attackSound != null)
-        {
             audioSource.PlayOneShot(attackSound);
-        }
 
-        Debug.Log("[Enemy] ¡Atacando al jugador!");
+        Debug.Log(
+            "[Enemy] ¡Ataque normal! Daño: " + attackDamage
+        );
 
-        if (PlayerManager.Instance != null)
+        PlayerManager player = PlayerManager.Instance;
+
+        if (player == null)
+            return;
+
+        IDamageable damageable =
+            player.GetComponent<IDamageable>();
+
+        if (damageable == null)
         {
-            IDamageable playerDamageable =
-                PlayerManager.Instance.GetComponent<IDamageable>();
-
-            if (playerDamageable != null)
-            {
-                playerDamageable.TakeDamage(attackDamage);
-            }
+            Debug.LogWarning(
+                "[Enemy] El jugador no tiene un componente IDamageable."
+            );
+            return;
         }
+
+        damageable.TakeDamage(attackDamage);
     }
 }

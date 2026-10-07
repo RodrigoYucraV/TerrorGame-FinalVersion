@@ -7,6 +7,9 @@ public class EnemyController : MonoBehaviour
 {
     [Header("Evolución / Dificultad")]
     [SerializeField] private bool isEnraged = false;
+
+    public bool IsEnraged => isEnraged;
+
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip screamSound;
     [SerializeField] private AudioClip attackSound;
@@ -99,12 +102,11 @@ public class EnemyController : MonoBehaviour
 
     private void HandleDamageTaken(float amount)
     {
-        if (isInvulnerable) return; // Si se está transformando, no siente dolor
+        if (isInvulnerable) return;
         if (isDying) return;
         if (isEnraged) return;
-        if (currentState is RetreatStateLogic) return;
 
-        HandleLightScare();
+        HandleFlashlightReaction();
     }
 
     // ✅ CORRECCIÓN 3: El método conflictivo ahora es seguro y limpio
@@ -142,6 +144,16 @@ public class EnemyController : MonoBehaviour
         if (isDying || isInvulnerable) return;
         currentState = new AttackStateLogic(this, stateMachine, playerPositionProvider, enemyMovement, audioSource, attackSound);
         stateMachine.SetState(currentState);
+    }
+    public void HandleFlashlightReaction()
+    {
+        if (isDying || isInvulnerable || isEnraged)
+            return;
+
+        if (currentState is RetreatStateLogic)
+            return;
+
+        HandleLightScare();
     }
 
     public void ReturnToStealthAfterRespawn()

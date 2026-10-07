@@ -15,6 +15,7 @@ public class PlayerManager : MonoBehaviour, IPlayerPositionProvider
     private JumpSystem jump;
     private CameraController cameraController;
     [SerializeField] private Transform playerCameraTransform;
+    private bool movementLocked;
 
     public Vector3 PlayerBodyPosition => transform.position;
     public Vector3 PlayerForward => transform.forward;
@@ -61,10 +62,24 @@ public class PlayerManager : MonoBehaviour, IPlayerPositionProvider
 
     private void Update()
     {
-        movement.SetMovementInput(new Vector3(input.MoveInput.x, 0, input.MoveInput.y));
         cameraController.RotateCamera(input.LookInput);
 
-        if (input.JumpPressed) jump.Jump();
+        if (movementLocked)
+        {
+            movement.SetMovementInput(Vector3.zero);
+            return;
+        }
+
+        movement.SetMovementInput(
+            new Vector3(input.MoveInput.x, 0f, input.MoveInput.y)
+        );
+
+        if (input.JumpPressed)
+            jump.Jump();
+    }
+    public void SetMovementLocked(bool locked)
+    {
+        movementLocked = locked;
     }
 
     private void FixedUpdate() => jump.CheckGrounded();

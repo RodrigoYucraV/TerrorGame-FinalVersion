@@ -1789,6 +1789,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerUI
       objectReference: {fileID: 0}
+    - target: {fileID: 1045416252536093882, guid: e13bd94707aa15248ad282d891743fa4, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 13.2300415
+      objectReference: {fileID: 0}
     - target: {fileID: 3022417009170890824, guid: e13bd94707aa15248ad282d891743fa4, type: 3}
       propertyPath: inventorySystem
       value: 
@@ -3654,6 +3658,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   category: 1
+--- !u!1 &1409837485 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7827102683581586086, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
+  m_PrefabInstance: {fileID: 5873477595444012793}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1409837487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1409837485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb9b96511f6e916498e8c81ae0d0968c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  verticalAmplitude: 0.4
+  verticalFrequency: 0.8
+  pitchAmplitude: 2
+  yawAmplitude: 2
+  rollAmplitude: 1.2
+  rotationFrequency: 0.8
+  randomizePhase: 1
+  phaseOffset: 0
+  effectEnabled: 1
+  intensity: 1
 --- !u!1 &1424462657
 GameObject:
   m_ObjectHideFlags: 0
@@ -4400,6 +4431,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1548692169123790705, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7246393324759036503, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
       propertyPath: audioSource
       value: 
@@ -4408,10 +4443,15 @@ PrefabInstance:
       propertyPath: playerBody
       value: 
       objectReference: {fileID: 1320233453}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedComponents:
+    - {fileID: 1548692169123790705, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
+    m_RemovedGameObjects:
+    - {fileID: 6625268303239398115, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7827102683581586086, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1409837487}
   m_SourcePrefab: {fileID: 100100000, guid: b6adaf9829dc76540873b13ba4ca31ab, type: 3}
 --- !u!1001 &6262177954205919778
 PrefabInstance:

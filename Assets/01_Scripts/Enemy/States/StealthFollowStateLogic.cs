@@ -62,39 +62,38 @@ public class StealthFollowStateLogic: IEnemyState
 
     public void Tick()
     {
-        if (playerPositionProvider != null)
+        if (playerPositionProvider == null)
+            return;
+
+        if (!ignoreSight &&
+            detectionEvents is IPlayerDetector detector &&
+            detector.IsHitByFlashlight)
         {
-            float dist = Vector3.Distance(
-                enemy.transform.position,
-                playerPositionProvider.PlayerBodyPosition
-            );
-
-            // DEBUG TEMPORAL: mostrar la distancia cada 0.5 segundos
-            debugDistanceTimer -= Time.deltaTime;
-
-            if (debugDistanceTimer <= 0f)
-            {
-               
-                debugDistanceTimer = 0.5f;
-            }
-
-            if (dist <= 2.2f)
-            {
-               
-
-                enemy.GoToAttackState();
-                return;
-            }
+            enemy.HandleFlashlightReaction();
+            return;
         }
-
-        // Si nos tienen que detener y NO estamos en modo agresivo
-        if (isMovementStopped && !ignoreSight)
+        if (!ignoreSight &&
+            detectionEvents is IPlayerDetector playerDetector &&
+            playerDetector.IsPlayerLookingAtEnemy)
         {
+            isMovementStopped = true;
             movement.Stop();
             return;
         }
+        isMovementStopped = false;
 
-        // Lógica de movimiento
+        float dist = Vector3.Distance(
+            enemy.transform.position,
+            playerPositionProvider.PlayerBodyPosition
+        );
+
+
+        if (dist <= 1.15f)
+        {
+            enemy.GoToAttackState();
+            return;
+        }
+
         CalculateAndMove();
     }
 
